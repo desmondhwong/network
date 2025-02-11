@@ -1,0 +1,60 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.container {
+    text-align: center;
+}
+
+button, select, input {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+#result {
+    margin-top: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 18px;
+    font-weight: bold;
+    word-break: break-all;
+    max-width: 50%;
+    padding: 10px;
+    box-sizing: border-box;
+    white-space: pre-wrap;
+    border: 1px solid #ccc;
+    font-family: monospace;
+    font-size: 16px;
+    min-height: 100px; /* Ensure the text box has a minimum height */
+    outline: none;
+    cursor: text; /* Ensure the text cursor shows for editing */
+    user-select: text; /* Ensure the text is selectable */
+}
+
+.highlight {
+    color: red;
+    font-weight: bold;
+}
+
+#visualizer {
+    margin-top: 10px;
+    font-size: 18px;
+}
+
+.grabbable {
+    cursor: grab;
+}
+
+.grabbing {
+    cursor: grabbing;
+}
+

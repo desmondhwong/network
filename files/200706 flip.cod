@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cockatrice_deck version="1">
+    <deckname>200706 flip</deckname>
+    <comments></comments>
+    <zone name="main">
+        <card number="1" name="Goblin Oriflamme"/>
+        <card number="1" name="Chance Encounter"/>
+        <card number="1" name="Flock of Rabid Sheep"/>
+        <card number="1" name="Karametra's Favor"/>
+        <card number="1" name="Changeling Titan"/>
+        <card number="1" name="Proteus Machine"/>
+        <card number="1" name="Impulsive Maneuvers"/>
+        <card number="1" name="Utopia Tree"/>
+        <card number="1" name="Stolen Strategy"/>
+        <card number="1" name="Helm of the Gods"/>
+        <card number="1" name="Lust for War"/>
+        <card number="1" name="Goblin Lyre"/>
+        <card number="1" name="Mirror March"/>
+        <card number="1" name="Pouncing Cheetah"/>
+        <card number="1" name="Creepy Doll"/>
+        <card number="1" name="Grimoire of the Dead"/>
+        <card number="1" name="Springing Tiger"/>
+        <card number="1" name="Verdant Embrace"/>
+        <card number="1" name="Nacatl Savage"/>
+        <card number="1" name="Planar Chaos"/>
+        <card number="1" name="Goblin Replica"/>
+        <card number="1" name="Gaea's Cradle"/>
+        <card number="1" name="Crystalline Crawler"/>
+        <card number="1" name="Ferocious Zheng"/>
+        <card number="1" name="Cinder Pyromancer"/>
+        <card number="8" name="Mountain"/>
+        <card number="9" name="Forest"/>
+    </zone>
+    <zone name="side">
+        <card number="1" name="Strength from the Fallen"/>
+        <card number="1" name="Petra Sphinx"/>
+        <card number="1" name="Reach Through Mists"/>
+        <card number="1" name="Curse of Vengeance"/>
+        <card number="1" name="Curse of Fool's Wisdom"/>
+        <card number="1" name="Resilient Khenra"/>
+        <card number="1" name="Goblin Engineer"/>
+        <card number="1" name="Strategy, Schmategy"/>
+        <card number="1" name="Dual Casting"/>
+        <card number="1" name="Burrowing"/>
+        <card number="1" name="The Tabernacle at Pendrell Vale"/>
+        <card number="1" name="Moonglove Changeling"/>
+        <card number="1" name="Cat Warriors"/>
+        <card number="1" name="Pyromancy"/>
+        <card number="1" name="Savage Firecat"/>
+        <card number="1" name="Mana Echoes"/>
+        <card number="1" name="Land's Edge"/>
+        <card number="1" name="Willow Priestess"/>
+        <card number="1" name="Nectar Faerie"/>
+        <card number="1" name="Curse of Thirst"/>
+    </zone>
+</cockatrice_deck>

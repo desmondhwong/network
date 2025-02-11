@@ -1,0 +1,257 @@
+200511 erythroagglutinin
+https://en.wiktionary.org/wiki/erythroagglutinin
+
+---
+
+surfing alfvén waves:
+https://twitter.com/desmondhwong/status/1254438515129057280
+light, glass, spacetime are fluid. earth is a pearl, glacially polished by tidal gamma rays; lethargic solar flares seep through sandy, rippled magnetic fields. doughy magma oozes like tree sap; via greek μάγμα, from μάσσω, mássō, meaning "i knead". plasma from πλάσμα, "jelly" … https://twitter.com/pangmeli/status/1254209254975774723
+
+raining radiation and feeling barometric pressure in my bones. prūna, "live glowing coal", derived from *prews-, meaning "to freeze". heat death of the universe unevenly distributed across microclimates. collective psyches—cloudy flocks of jellyfish—riding intergalactic currents.
+
+dalí's clocks aren't metaphors, they're diagrams.
+
+… it is possible for a body of fluid to form a sort of computer, which can build a self-replicating fluid robot that, like the Cat in the Hat, keeps transferring its energy to smaller and smaller copies of itself until the fluid “blows up.” https://twitter.com/ultimape/status/1257131434181046272
+
+https://www.quantamagazine.org/terence-tao-proposes-fluid-new-path-in-navier-stokes-problem-20140224/
+
+https://en.wikipedia.org/wiki/Interstellar_cloud
+
+---
+
+Apsis
+https://en.wikipedia.org/wiki/Apsis#Perihelion_and_aphelion
+
+apsis denotes either of the two extreme points in the orbits of a planetary body about its primary body
+perihelion: earth's nearest point from the sun: ~147,098,070 km
+early January, ~14 days after the December solstice, 12/21
+
+aphelion: earth's farthest point from the sun: ~152,097,700 km
+early July, ~14 days after the June solstice, 6/20–22
+
+Milankovitch cycles describe the collective effects of changes in the Earth's movements on its climate over thousands of years.
+
+The astronomical unit (au, ua, or AU): the distance from Earth to the Sun: ~150 million kilometres. However, that distance varies as Earth orbits the Sun, aphelion to perihelion, and back again once a year. Originally conceived as the average of Earth's aphelion and perihelion, since 2012 it has been defined as exactly 149,597,870,700 m.
+
+---
+
+Redefinition of AU
+https://en.wikipedia.org/wiki/Astronomical_unit#cite_note-5
+https://www.iau.org/static/resolutions/IAU2012_English.pdf
+
+RESOLUTION B2 on the re-definition of the astronomical unit of length
+Proposed by the IAU Division I Working Group Numerical Standards
+and supported by Division I
+
+noting
+6. that the value for GMs is consistent with the value of Table 1 to within the errors of the estimate; and
+
+considering
+1. the need for a self-consistent set of units and numerical standards for use in modern dynamical astronomy in the framework of General Relativity
+2. that the accuracy of modern range measurements makes the use of distance ratios unnecessary
+
+recommends
+1. that the astronomical unit be re-defined to be a conventional unit of length equal to
+149 597 870 700 m exactly
+3. that the Gaussian gravitational constant k be deleted from the system of astronomical
+constants,
+
+---
+
+The Asiago Database on Photometric Systems (ADPS) project aims to cense and investigate existing photometric systems.
+http://ulisse.pd.astro.it/Astro/ADPS/enter2.html
+
+https://twitter.com/desmondhwong/status/831559699862523909
+
+---
+
+Redshift
+https://en.wikipedia.org/wiki/Redshift
+
+In physics, redshift is a phenomenon where electromagnetic radiation (such as light) from an object undergoes an increase in wavelength. Whether or not the radiation is visible, "redshift" means an increase in wavelength, equivalent to a decrease in wave frequency and photon energy, in accordance with, respectively, the wave and quantum theories of light.
+
+Neither the emitted nor perceived light is necessarily red; instead, the term refers to the human perception of longer wavelengths as red, which is at the section of the visible spectrum with the longest wavelengths. Examples of redshifting are a gamma ray perceived as an X-ray, or initially visible light perceived as radio waves. The opposite of a redshift is a blueshift, where wavelengths shorten and energy increases. However, redshift is a more common term and sometimes blueshift is referred to as negative redshift.
+
+There are three main causes of redshifts in astronomy and cosmology:
+1. Objects move apart (or closer together) in space. This is an example of the Doppler effect.
+2. Space itself is expanding, causing objects to become separated without changing their positions in space. This is known as cosmological redshift. All sufficiently distant light sources (generally more than a few million light-years away) show redshift corresponding to the rate of increase in their distance from Earth, known as Hubble's law.
+3. Gravitational redshift is a relativistic effect observed due to strong gravitational fields, which distort spacetime and exert a force on light and other particles.
+
+---
+
+William G. Tifft is Emeritus Professor/Astronomer at the University of Arizona.
+His main interests are in galaxies, superclusters and what Tifft calls redshift problems (see redshift quantization).
+https://en.wikipedia.org/wiki/William_G._Tifft#cite_note-arp1986-7
+
+https://www.as.arizona.edu/people/faculty/william-tifft
+
+Based on observations of nearby galaxies, Tifft has put forward the idea that the redshifts of galaxies are quantized, or that they occur preferentially as multiples of a set number. (1976–1977, Astrophysical Journal)
+
+The ideas were controversial when originally proposed; the editors of the Astrophysical Journal included a note in one of the papers stating that they could neither find errors within the analysis nor endorse the analysis. Subsequently, Tifft and Cocke put forward a theory to try to explain the quantization. Tifft's results have been largely replicated by Croasdale and later Napier and Guthrie. Croasdale did a comprehensive analysis of the statistical significance and confirmed the special frame in which quantization is found to be the same over the whole sky. Since the initial publication of these results, Tifft's findings have been used by others, such as Halton Arp, in making an alternative explanation to the Big Bang Theory, which states that galaxies are redshifted because the universe is expanding. However, Tifft himself, when interviewed for the popular science magazine Discover in 1993, stated that he was not necessarily claiming that the universe was not expanding.
+
+---
+
+The redshift distribution of absorption-line systems in QSO spectra
+A.I. Ryabinkov, A.D. Kaminker, D.A. Varshalovich
+https://arxiv.org/abs/astro-ph/0703277
+
+A statistical analysis of the space-time distribution of absorption-line systems (ALSs) observed in QSO spectra within the cosmological redshift interval z=0.0--3.7 is carried out on the base of our catalog of absorption systems. We confirm our previous conclusion that the z-distribution of absorbing matter contains non-uniform component displaying a pattern of statistically significant alternating maxima (peaks) and minima (dips). Using the wavelet transformation we determine the positions of the maxima and minima and estimate their statistical significance. The positions of the maxima and minima of the z-distributions obtained for different celestial hemispheres turn out to be weakly sensitive to orientations of the hemispheres. The data reveal a regularity (quasi-periodicity) of the sequence of the peaks and dips with respect to some rescaling functions of z. The same periodicity was found for the one-dimensional correlation function calculated for the sample of the ALSs under investigation. We assume the existence of a regular structure in the distribution of absorption matter, which is not only spatial but also temporal in nature with characteristic time varying within the interval 150--650 Myr for the cosmological model applied.
+
+---
+
+Rendering of the 2dFGRS data
+https://en.wikipedia.org/wiki/Redshift#/media/File:2dfgrs.png
+No machine-readable source provided.
+A rendering of the w:2dF Galaxy Redshift Survey data. This was created using the Intrepix AstroVis software created as part of a university project. The data set used is the "best spectroscopic observations" in ASCII format. 30% of the sources (galaxies) were chosen at random from the data set to be rendered for this image. Fluctuations in density in various parts of the universe are clearly visible from this image.
+
+---
+
+Frame of reference
+https://en.wikipedia.org/wiki/Frame_of_reference
+
+In physics, a frame of reference consists of an abstract coordinate system and the set of physical reference points that uniquely fix (locate and orient) the coordinate system and standardize measurements within that frame.
+
+For n dimensions, n + 1 reference points are sufficient to fully define a reference frame. Using rectangular (Cartesian) coordinates, a reference frame may be defined with a reference point at the origin and a reference point at one unit distance along each of the n coordinate axes.
+
+In Einsteinian relativity, reference frames are used to specify the relationship between a moving observer and the phenomenon or phenomena under observation. In this context, the phrase often becomes "observational frame of reference" (or "observational reference frame"), which implies that the observer is at rest in the frame, although not necessarily located at its origin. A relativistic reference frame includes (or implies) the coordinate time, which does not correspond across different frames moving relatively to each other. The situation thus differs from Galilean relativity, where all possible coordinate times are essentially equivalent.
+
+---
+
+Quantum Temporal Cosmology (QTC)
+
+https://cosmologyandtime.files.wordpress.com/2014/06/naturred.pdf
+This paper presents an illustrated introduction to an alternate cosmology, Quantum Temporal Cosmology (QTC), an updated review based upon extensive observational data concerning the nature of the redshift and the structure of time.
+
+The theory is founded upon time being three dimensional (called tau-space) with matter (in spaces called sigma-spaces) flowing out radially from a near-singular origin in time. This is a temporal flow in tau-space defining c, not a spatial velocity. As energy decays, doubling processes produce quantization, define properties of matter, and generate observational effects discussed. Steps are being taken to define a much more extensive and mathematical background. The upper left diagram in Figure 11 is a conceptual picture of tau-space expansion where sigma-spaces (galaxies) flow out radially on timelines. There are two expansions from the point of view of galaxies which are effectively ’particles’ in tau-space. There is temporal (radial) and spatial (lateral) expansion as timelines grow and separate sigma spaces, which seems to resolve the dark energy problem. The diagram at lower left shows the dual redshift prediction in QCT appears to fit supernova data. The different structure further indicates that lookback geometry in 3-d time corresponds to a logarithmic spiral. The figure at right illustrates time-time lookback geometry with observed redshifts marked. Present maximum observed redshifts are far from the origin (since the dual expansion in QTC is absent in classical cosmology and ascribed to dark energy). When converted to zLT observed zo = 11.24, at a divergence angle of 1.5 radians, reduces to zLT = 3.48 (equation 1). In QTC at zLT = 3.48 the universe is slightly less than 1/4 of its present age, leaving much time to form structures (which are formed in quite a different way in QTC). Other classical problems, dark matter and redshift quantization itself have plausible explanations within QTC.
+
+---
+
+Time in Cosmology (Scientific Association for the Study of Cosmology and Time) 
+https://timeincosmology.com/2014/10/03/welcome-to-sastpc/
+
+Recently, there have been a growing number of scientists, theorists, journalists, and others who have expressed and exposed the rather high degree of frustration within the scientific community. This frustration extends broadly from String Theory to the Standard Cosmology, and to related areas. Although there have been recent encouraging experimental results, the many scientific controversies that exist have not been diminished, in fact, many have been intensified.
+
+Because of this, we have established this Time in Cosmology (Scientific Association for the Study of Cosmology and Time) website as a vehicle for exploring interesting ideas and credible alternatives to posit a more universal review to a wider audience. To this end, we would like to offer Dr. William Tifft’s blog to introduce the philosophy and physical foundations of time.  Although some of the posts are open for review by a general audience, the majority is academic and involves real science, not science fiction or unfounded speculation.
+
+---
+
+The Big Bang Never Happened: A Startling Refutation of the Dominant Theory of the Origin of the Universe
+Eric J. Lerner
+
+https://www.instagram.com/p/B8hOcdElRtQ/
+taolin 2/13/2020
+
+I recommend this positive, hopeful book on how the universe is not 13.8 billion years old, but either at least a trillion years old or of infinite age, with no beginning or end, and on how the Big Bang theory has been disproven by observational evidence many times but persists due, among other reasons, to (1) billions of dollars being invested in its veracity via particle accelerators (2) mainstream media’s reporting on it (3) the bleakness of the theory (which says the universe will end in a Big Crunch or else expand forever, until everything dies from coldness) being attractive to intellectuals who are detached from nature and have pessimistic worldviews.
+
+I especially recommend this book for people interested in Terence McKenna’s idea of increasing complexity and the end of history. This book contains a critique of the other, later idea of “the end of history,” the bleak one, by Francis Fukuyama.
+
+Also covered in this book: plasma cosmology, antimatter, the metagalaxy, the non-existence of black holes, the ideas of Hannes Alfven and Ilya Prigogine, free will, consciousness, and emergent properties.
+
+Will answer any questions people have about this book, which isn't obscure (it was published by Vintage, my publisher, in 1991) in the comments. Thank you for your time and attention in this post.
+
+https://en.wikipedia.org/wiki/Eric_Lerner
+
+The Big Bang Never Happened: A Startling Refutation of the Dominant Theory of the Origin of the Universe (1991) is a book by Lerner which rejects mainstream Big Bang cosmology, and instead advances a non-standard plasma cosmology originally proposed by Hannes Alfvén in the 1960s. The book appeared at a time when results from the Cosmic Background Explorer satellite were of some concern to astrophysicists who expected to see cosmic microwave background anisotropies but instead measured a blackbody spectrum with little variation across the sky. Lerner referred to this as evidence that the Big Bang was a failed paradigm. He also denigrated the observational evidence for dark matter and recounted a well known cosmological feature that superclusters are larger than the largest structures that could have formed through gravitational collapse in the age of the universe.
+
+As an alternative to the Big Bang, Lerner adopted Alfvén's model of plasma cosmology that relied on plasma physics to explain most, if not all, cosmological observations by appealing to electromagnetic forces. Adopting an eternal universe, Lerner's explanation of cosmological evolution relied on a model of thermodynamics based on the work of the Nobel Chemistry prize winner Ilya Prigogine under which order emerges from chaos. This is in apparent defiance of the second law of thermodynamics. As a way of partially acknowledging this, Lerner asserts that away from equilibrium order can spontaneously form by taking advantage of energy flows, as argued more recently by American astrophysicist Eric Chaisson.
+
+---
+
+Hannes Alfvén
+https://en.wikipedia.org/wiki/Hannes_Alfv%C3%A9n
+
+Hannes Olof Gösta Alfvén (30 May 1908 – 2 April 1995) was a Swedish electrical engineer, plasma physicist and winner of the 1970 Nobel Prize in Physics for his work on magnetohydrodynamics (MHD). He described the class of MHD waves now known as Alfvén waves. He was originally trained as an electrical power engineer and later moved to research and teaching in the fields of plasma physics and electrical engineering. Alfvén made many contributions to plasma physics, including theories describing the behavior of aurorae, the Van Allen radiation belts, the effect of magnetic storms on the Earth's magnetic field, the terrestrial magnetosphere, and the dynamics of plasmas in the Milky Way galaxy.
+
+Magnetohydrodynamics (MHD; also magneto-fluid dynamics or hydro­magnetics) is the study of the magnetic properties and behaviour of electrically conducting fluids. Examples of such magneto­fluids include plasmas, liquid metals, salt water, and electrolytes. The word "magneto­hydro­dynamics" is derived from magneto- meaning magnetic field, hydro- meaning water, and dynamics meaning movement.
+
+The fundamental concept behind MHD is that magnetic fields can induce currents in a moving conductive fluid, which in turn polarizes the fluid and reciprocally changes the magnetic field itself. The set of equations that describe MHD are a combination of the Navier–Stokes equations of fluid dynamics and Maxwell’s equations of electro­magnetism. These differential equations must be solved simultaneously, either analytically or numerically.
+
+The first recorded use of the word magnetohydrodynamics is by Hannes Alfvén in 1942:
+"At last some remarks are made about the transfer of momentum from the Sun to the planets, which is fundamental to the theory. The importance of the Magnetohydrodynamic waves in this respect are pointed out."
+The ebbing salty water flowing past London's Waterloo Bridge interacts with the Earth's magnetic field to produce a potential difference between the two river-banks. Michael Faraday called this effect "magneto-electric induction" and tried this experiment in 1832 but the current was too small to measure with the equipment at the time, and the river bed contributed to short-circuit the signal. However, by a similar process the voltage induced by the tide in the English Channel was measured in 1851.
+
+Earth's Inconstant Magnetic Field
+https://science.nasa.gov/science-news/science-at-nasa/2003/29dec_magneticfield/
+Based on the MHD equations, Glatzmaier and Paul Roberts have made a supercomputer model of the Earth's interior. After running the simulations for thousands of years in virtual time, the changes in Earth's magnetic field can be studied. The simulation results are in good agreement with the observations as the simulations have correctly predicted that the Earth's magnetic field flips every few hundred thousand years. During the flips, the magnetic field does not vanish altogether—it just gets more complex.
+
+Numerical and experimental study of liquid metal stirring by rotating permanent magnets
+https://iopscience.iop.org/article/10.1088/1757-899X/424/1/012047
+
+The coronal heating problem
+The study of Alfvén waves began from the coronal heating problem, a longstanding question in heliophysics. It was unclear why the temperature of the solar corona is hot (about one million degrees Kelvin) compared to its surface (i.e. the photosphere), which is only a few thousand degrees. Intuitively, it would make sense to see a decrease in temperature when moving away from a heat source, but this does not seem to be the case even though the photosphere is denser and would generate more heat than the corona.
+
+In 1942, Hannes Alfvén proposed in Nature the existence of an electromagnetic-hydrodynamic wave which would carry energy from the photosphere to heat up the corona and the solar wind. He claimed that the sun had all the necessary criteria to support these waves and they may in turn be responsible for sun spots. He stated:
+
+If a conducting liquid is placed in a constant magnetic field, every motion of the liquid gives rise to an E.M.F. which produces electric currents. Owing to the magnetic field, these currents give mechanical forces which change the state of motion of the liquid. Thus a kind of combined electromagnetic-hydrodynamic wave is produced.
+
+This would eventually turn out to be Alfvén waves.
+https://en.wikipedia.org/wiki/Alfv%C3%A9n_wave
+
+---
+
+Plasma Cosmology
+https://en.wikipedia.org/wiki/Plasma_cosmology
+
+Plasma (from Ancient Greek πλάσμα​, meaning 'moldable substance'[1]) is one of the four fundamental states of matter.
+
+Plasma cosmology is a non-standard cosmology whose central postulate is that the dynamics of ionized gases and plasmas play important, if not dominant, roles in the physics of the universe beyond the Solar System. In contrast, the current observations and models of cosmologists and astrophysicists explain the formation, development, and evolution of astronomical bodies and large-scale structures in the universe as influenced by gravity (including its formulation in Albert Einstein's General Theory of Relativity) and baryonic physics.
+
+Some theoretical concepts about plasma cosmology originated with Hannes Alfvén, who tentatively proposed the use of plasma scaling to extrapolate the results of laboratory experiments and plasma physics observations and scale them over many orders of magnitude up to the largest observable objects in the universe.
+
+Cosmologists and astrophysicists who have evaluated plasma cosmology reject it because it does not match the observations of astrophysical phenomena as well as current cosmological theory. Very few papers supporting plasma cosmology have appeared in the literature since the mid-1990s.
+
+The term plasma universe is sometimes used as a synonym for plasma cosmology, as an alternative description of the plasma in the universe.
+
+Hannes Alfvén suggested that scaling laboratory results can be extrapolated up to the scale of the universe. A scaling jump by a factor 109 was required to extrapolate to the magnetosphere, a second jump to extrapolate to galactic conditions, and a third jump to extrapolate to the Hubble distance.
+
+---
+
+Brane Cosmology
+https://en.wikipedia.org/wiki/Brane_cosmology
+
+The central idea is that the visible, three-dimensional universe is restricted to a brane inside a higher-dimensional space, called the "bulk" (also known as "hyperspace"). If the additional dimensions are compact, then the observed universe contains the extra dimension, and then no reference to the bulk is appropriate. In the bulk model, at least some of the extra dimensions are extensive (possibly infinite), and other branes may be moving through this bulk. Interactions with the bulk, and possibly with other branes, can influence our brane and thus introduce effects not seen in more standard cosmological models.
+
+---
+
+Alfvén wave timeline
+https://en.wikipedia.org/wiki/Alfv%C3%A9n_wave
+
+1942: Alfvén suggests the existence of electromagnetic-hydromagnetic waves in a paper published in Nature 150, 405–406 (1942).
+1949: Laboratory experiments by S. Lundquist produce such waves in magnetized mercury, with a velocity that approximated Alfvén's formula.
+1949: Enrico Fermi uses Alfvén waves in his theory of cosmic rays. According to Alexander J. Dessler in a 1970 Science journal article, Fermi had heard a lecture at the University of Chicago, Fermi nodded his head exclaiming "of course" and the next day, the physics world said "of course".
+1950: Alfvén publishes the first edition of his book, Cosmical Electrodynamics, detailing hydromagnetic waves, and discussing their application to both laboratory and space plasmas.
+1952: Additional confirmation appears in experiments by Winston Bostick and Morton Levine with ionized helium.
+1954: Bo Lehnert produces Alfvén waves in liquid sodium.[12]
+1958: Eugene Parker suggests hydromagnetic waves in the interstellar medium.
+1958: Berthold, Harris, and Hope detect Alfvén waves in the ionosphere after the Argus nuclear test, generated by the explosion, and traveling at speeds predicted by Alfvén formula.
+1958: Eugene Parker suggests hydromagnetic waves in the Solar corona extending into the Solar wind.
+1959: D. F. Jephcott produces Alfvén waves in a gas discharge.[13]
+1959: C. H. Kelley and J. Yenser produce Alfvén waves in the ambient atmosphere.
+1960: Coleman et al. report the measurement of Alfvén waves by the magnetometer aboard the Pioneer and Explorer satellites.[14]
+1961: Sugiura suggests evidence of hydromagnetic waves in the Earth's magnetic field.[15]
+1961: Normal Alfvén modes and resonances in liquid sodium are studied by Jameson.
+1966: R. O. Motz generates and observes Alfven waves in mercury.[16]
+1970: Hannes Alfvén wins the 1970 Nobel Prize in physics for "fundamental work and discoveries in magneto-hydrodynamics with fruitful applications in different parts of plasma physics".
+1973: Eugene Parker suggests hydromagnetic waves in the intergalactic medium.
+1974: J. V. Hollweg suggests the existence of hydromagnetic waves in interplanetary space.[17]
+1977: Mendis and Ip suggest the existence of hydromagnetic waves in the coma of Comet Kohoutek.[18]
+1984: Roberts et al. predict the presence of standing MHD waves in the solar corona[19] and opens the field of coronal seismology.
+1999: Aschwanden et al.[20] and Nakariakov et al. report the detection of damped transverse oscillations of solar coronal loops observed with the EUV imager on board the Transition Region And Coronal Explorer (TRACE), interpreted as standing kink (or "Alfvénic") oscillations of the loops. This confirms the theoretical prediction of Roberts et al. (1984).
+2007: Tomczyk et al. reported the detection of Alfvénic waves in images of the solar corona with the Coronal Multi-Channel Polarimeter (CoMP) instrument at the National Solar Observatory, New Mexico.[21] However, these observations turned out to be kink waves of coronal plasma structures.[22][1][permanent dead link][2]
+2007: A special issue on the Hinode space observatory was released in the journal Science.[23] Alfvén wave signatures in the coronal atmosphere were observed by Cirtain et al.,[24] Okamoto et al.,[25] and De Pontieu et al.[26] An estimation of the observed waves' energy density by De Pontieu et al. have show that the energy associated with the waves is sufficient to heat the corona and accelerate the solar wind.
+2008: Kaghashvili et al. uses driven wave fluctuations as a diagnostic tool to detect Alfvén waves in the solar corona.[27]
+2009: Jess et al. detect torsional Alfvén waves in the structured Sun's chromosphere using the Swedish Solar Telescope.[9]
+2011: Alfvén waves are shown to propagate in a liquid metal alloy made of Gallium.[28]
+2017: 3D numerical modelling performed by Srivastava et al. show that the high-frequency (12-42 mHz) Alfvén waves detected by the Swedish Solar Telescope can carry substantial energy to heat the Sun's inner corona.[10]
+2018: Using spectral imaging observations, non-LTE inversions and magnetic field extrapolations of sunspot atmospheres, Grant et al. found evidence for elliptically-polarized Alfvén waves forming fast-mode shocks in the outer regions of the chromospheric umbral atmosphere. For the first time, these authors provided quantification of the degree of physical heat provided by the dissipation of such Alfvén wave modes.[11]
+
+Alfvén Wave Dissipation in the Solar Chromosphere
+https://arxiv.org/pdf/1810.07712.pdf
+Here, we show the dissipation of chromospheric Alfvén waves into thermal energy for the first time. We reveal how high-resolution observations provide the direct detection of these signatures, in the form of identifying the necessary plasma=b = 1 equipartition region and revealing the co-spatial negative Alfvén speed gradients and associated tangential Doppler velocities synonymous with Alfvén shock dissipation, to provide first light on an enigmatic problem within astrophysics that has remained elusive for over half a century. With the viability of Alfvén waves to heat localized plasma confirmed, future studies can build upon our novel findings and examine the consequences of Alfvén
+shocks in greater detail using spectro-polarimetric data and advanced inversion techniques. Looking further ahead, the capabilities of the upcoming 4m Daniel K. Inouye Solar Telescope, set for first light in 2019, will unveil the fine structure of these shocks on an unprecedented scale, allowing the role Alfvén shocks play in global solar atmospheric heating to be fully assessed.
+
+---
+
+Void
+https://en.wikipedia.org/wiki/Void_(astronomy)
+Cosmic voids are vast spaces between filaments (the largest-scale structures in the universe), which contain very few or no galaxies. Voids typically have a diameter of 10 to 100 megaparsecs; particularly large voids, defined by the absence of rich superclusters, are sometimes called supervoids.

@@ -1,0 +1,42 @@
+@font-face {
+    font-family: 'AUTHENTIC Sans';
+    src: url('../fonts/AUTHENTIC-Sans.woff2') format('woff2'),
+         url('../fonts/AUTHENTIC-Sans.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body{
+font-family: 'AUTHENTIC Sans', Arial, sans-serif;
+margin: 50px;
+text-align: left;
+    }
+
+h1, h2, p, a, ul, li {
+  font-size: 42px;
+  color: red;
+  font-weight: normal;
+  line-height: 1.2;
+  margin: 0px;
+  margin-bottom:50px;
+}
+
+ul {
+  list-style:none;
+   padding-left:0;
+}
+
+a {
+  text-decoration: none;
+}
+
+hr {
+  border: none;
+  height: 4px;
+  background: red;
+  margin-bottom: 50px;
+}
+
+img {
+  margin-bottom: 50px;
+}

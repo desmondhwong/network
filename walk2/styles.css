@@ -1,0 +1,103 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Prevent scrollbars */
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+}
+
+#randomWalkCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 80vh; /* Upper 80% for random walk */
+    background-color: white;
+}
+
+#barGraphCanvas {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 20vh; /* Bottom 20% for the bar graph */
+}
+
+.overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 100; /* Make sure UI is on top */
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+form, p {
+    margin-bottom: 10px;
+}
+
+.navigation-buttons {
+    margin-top: 10px;
+}
+
+button {
+    margin-top: 5px;
+}
+
+.popup-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    overflow-y: auto;
+    padding: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: none;
+}
+
+
+.bar-graph-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.bar-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.bar {
+    background-color: #4caf50;
+    height: 25px;
+    position: relative;
+    flex-grow: 0; /* Remove any flex-grow if present */
+    white-space: nowrap;
+}
+
+.bar span {
+    position: absolute;
+    right: 5px;
+    color: white;
+    white-space: nowrap;
+}
+
+.bar-label {
+    min-width: 150px;
+    margin-right: 10px;
+    white-space: nowrap;
+}

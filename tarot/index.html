@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarot</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Tarot</h1>
+    <div>
+        <button id="pay-button" onclick="showPayPalModal()">Unlock</button><br>
+        <label for="font-select">Typeface:</label>
+        <select id="font-select" onchange="changeFont()" disabled>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="'Courier New', Courier, monospace">Courier New</option>
+            <option value="'Georgia', serif">Georgia</option>
+            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+            <option value="'Trebuchet MS', Helvetica, sans-serif">Trebuchet MS</option>
+            <option value="'Verdana', Geneva, sans-serif">Verdana</option>
+            <option value="'Lucida Console', Monaco, monospace">Lucida Console</option>
+            <option value="'Comic Sans MS', cursive, sans-serif">Comic Sans MS</option>
+            <option value="'Impact', Charcoal, sans-serif">Impact</option>
+            <option value="'Palatino Linotype', 'Book Antiqua', Palatino, serif">Palatino Linotype</option>
+        </select>
+    </div>
+    <div>
+        <label for="significator">Significator:</label>
+        <select id="significator" onchange="selectSignificator()" disabled>
+            <option value="">--</option>
+            <!-- Options will be populated by JavaScript -->
+        </select>
+    </div>
+    <div id="spread">
+        <div id="card1" class="card"></div>
+        <div id="card2" class="card rotated"></div>
+        <div id="card3" class="card"></div>
+        <div id="card4" class="card"></div>
+        <div id="card5" class="card"></div>
+        <div id="card6" class="card"></div>
+        <div id="card7" class="card"></div>
+        <div id="card8" class="card"></div>
+        <div id="card9" class="card"></div>
+        <div id="card10" class="card"></div>
+    </div>
+    <div id="buttons">
+        <button id="draw-button" onclick="drawNextCard()" disabled>Draw</button>
+        <button id="shuffle-button" disabled>Shuffle</button>
+        <button id="reading-button" style="display: none;">Summary</button>
+        <button id="stats-button" onclick="showStatistics()" style="display: none;">Statistics</button>
+        <button id="share-button" onclick="generateShareableURL()" style="display: none;">Save</button>
+        <button id="reset-button" onclick="resetSpread()" style="display: none;">Reset</button>
+    </div>
+    <div id="description"></div>
+    <div id="stats-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Reading Statistics</h2>
+            <p id="stats-content"></p>
+        </div>
+    </div>
+    <div id="reading-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeReadingModal()">&times;</span>
+            <div id="reading-content"></div>
+        </div>
+    </div>
+    <div id="paypal-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePayPalModal()">&times;</span>
+            <h2>Unlock True Reading</h2>
+            <p>Our free tarot reading uses a pseudorandom number generator to shuffle and draw the cards, suitable for most occasions. Unlock the true tarot reading with a cryptographically secure, true random shuffle and drawing method for more accurate results. This premium option also grants access to a reading summary, statistics, and the ability to generate a permalink to save your reading for later review. Enhance your tarot reading experience with deeper insights through our true tarot reading.</p>
+            <div id="paypal-button-container"></div>
+        </div>
+    </div>
+
+    <script src="https://www.paypal.com/sdk/js?client-id=AZajQo5SHOU5dTCVqR63SAUTOYZOB07jxsTfiNMgMYZfoxkFNqNXXV6e9h2rCbon4hSsdNr56nYcQOvY&currency=USD"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+

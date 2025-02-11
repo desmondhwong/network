@@ -1,0 +1,53 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Prevent scrollbars */
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+}
+
+#randomWalkCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 80vh; /* Upper 80% for random walk */
+    background-color: white;
+}
+
+#barGraphCanvas {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 20vh; /* Bottom 20% for the bar graph */
+}
+
+.overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 100; /* Make sure UI is on top */
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+form, p {
+    margin-bottom: 10px;
+}
+
+.navigation-buttons {
+    margin-top: 10px;
+}
+
+button {
+    margin-top: 5px;
+}

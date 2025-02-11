@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cockatrice_deck version="1">
+    <deckname>200327 soulslivers</deckname>
+    <comments></comments>
+    <zone name="main">
+        <card number="1" name="Thundering Djinn"/>
+        <card number="1" name="Rain of Revelation"/>
+        <card number="1" name="Pillage"/>
+        <card number="1" name="Spinehorn Minotaur"/>
+        <card number="1" name="Cleaving Sliver"/>
+        <card number="1" name="Soulherder"/>
+        <card number="1" name="Bladeback Sliver"/>
+        <card number="1" name="Everdream"/>
+        <card number="1" name="Eyekite"/>
+        <card number="1" name="Scuttling Sliver"/>
+        <card number="3" name="Viashino Sandsprinter"/>
+        <card number="1" name="Cloudshredder Sliver"/>
+        <card number="1" name="Volatile Claws"/>
+        <card number="1" name="Stream of Thought"/>
+        <card number="1" name="Unsettled Mariner"/>
+        <card number="1" name="Serra the Benevolent"/>
+        <card number="1" name="Enduring Sliver"/>
+        <card number="1" name="Irregular Cohort"/>
+        <card number="1" name="Oneirophage"/>
+        <card number="5" name="Plains"/>
+        <card number="5" name="Island"/>
+        <card number="6" name="Mountain"/>
+        <card number="1" name="Smoke Shroud"/>
+        <card number="1" name="Amorphous Axe"/>
+        <card number="1" name="Talisman of Creativity"/>
+    </zone>
+    <zone name="side">
+        <card number="1" name="Soul-Strike Technique"/>
+        <card number="1" name="Windcaller Aven"/>
+        <card number="1" name="Pashalik Mons"/>
+        <card number="1" name="Hall of Heliod's Generosity"/>
+        <card number="1" name="Snow-Covered Mountain"/>
+        <card number="1" name="Snow-Covered Island"/>
+        <card number="1" name="Pyrophobia"/>
+        <card number="2" name="Goblin War Party"/>
+        <card number="1" name="Magmatic Sinkhole"/>
+        <card number="1" name="Bogardan Dragonheart"/>
+        <card number="1" name="Shenanigans"/>
+        <card number="1" name="Collected Conjuring"/>
+        <card number="1" name="Goblin Champion"/>
+    </zone>
+</cockatrice_deck>
