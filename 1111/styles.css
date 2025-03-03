@@ -1,13 +1,23 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Authentic Sans 90', Arial, sans-serif;
     text-align: center;
     margin: 20vh auto;
     font-size: 2rem;
     color: #333;
+    padding: 20px;
+}
+
+@font-face {
+    font-family: 'Authentic Sans 90';
+    src: url('fonts/authentic-sans-90.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
 }
 .blink {
     animation: blink 1s step-start infinite;
 }
 @keyframes blink {
-    50% { opacity: 0; }
+    50% {
+        opacity: 0;
+    }
 }

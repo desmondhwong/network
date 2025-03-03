@@ -64,12 +64,12 @@ function updateTime() {
     let countdownText = "In ";
     let countdownParts = [];
     if (remainingHours > 0) {
-        countdownParts.push(`${remainingHours} hours`);
+        countdownParts.push(`${remainingHours} hour${remainingHours !== 1 ? 's' : ''}`);
     }
     if (remainingMinutes > 0) {
-        countdownParts.push(`${remainingMinutes} minutes`);
+        countdownParts.push(`${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}`);
     }
-    countdownParts.push(`${remainingSeconds} seconds`);
+    countdownParts.push(`${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}`);
     
     if (countdownParts.length > 2) {
         countdownText += countdownParts.join(", ");
