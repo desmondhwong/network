@@ -11,29 +11,38 @@ function getNextWishTime() {
 
     wishTimes.forEach(time => {
         let [h, m] = time.split(":").map(Number);
-        let wishTimeAM = new Date(now);
-        let wishTimePM = new Date(now);
+        let candidateTimes = [];
 
-        // Set AM and PM versions
-        wishTimeAM.setHours(h, m, 0, 0);
-        wishTimePM.setHours(h + 12, m, 0, 0);
+        // For midnight (0) or noon (12), use only one version.
+        if (h === 0 || h === 12) {
+            let wishTime = new Date(now);
+            wishTime.setHours(h, m, 0, 0);
+            if (wishTime < now) wishTime.setDate(wishTime.getDate() + 1);
+            // For display, convert 0 to 12 for midnight, and show noon correctly.
+            let displayHour = h === 0 ? 12 : 12;
+            let period = h === 0 ? "am" : "pm";
+            candidateTimes.push({ date: wishTime, display: `${displayHour}:${m.toString().padStart(2, "0")} ${period}` });
+        } else {
+            // For other times, consider both AM and PM versions.
+            let wishTimeAM = new Date(now);
+            wishTimeAM.setHours(h, m, 0, 0);
+            if (wishTimeAM < now) wishTimeAM.setDate(wishTimeAM.getDate() + 1);
+            candidateTimes.push({ date: wishTimeAM, display: `${h}:${m.toString().padStart(2, "0")} am` });
 
-        if (wishTimeAM < now) wishTimeAM.setDate(wishTimeAM.getDate() + 1);
-        if (wishTimePM < now) wishTimePM.setDate(wishTimePM.getDate() + 1);
-
-        let diffAM = wishTimeAM - now;
-        let diffPM = wishTimePM - now;
-
-        if (diffAM < minDiff) {
-            minDiff = diffAM;
-            nextWish = wishTimeAM;
-            nextWishTimeString = `${h}:${m.toString().padStart(2, "0")} am`;
+            let wishTimePM = new Date(now);
+            wishTimePM.setHours(h + 12, m, 0, 0);
+            if (wishTimePM < now) wishTimePM.setDate(wishTimePM.getDate() + 1);
+            candidateTimes.push({ date: wishTimePM, display: `${h}:${m.toString().padStart(2, "0")} pm` });
         }
-        if (diffPM < minDiff) {
-            minDiff = diffPM;
-            nextWish = wishTimePM;
-            nextWishTimeString = `${h}:${m.toString().padStart(2, "0")} pm`;
-        }
+
+        candidateTimes.forEach(candidate => {
+            let diff = candidate.date - now;
+            if (diff < minDiff) {
+                minDiff = diff;
+                nextWish = candidate.date;
+                nextWishTimeString = candidate.display;
+            }
+        });
     });
     return { nextWish, nextWishTimeString };
 }
@@ -44,6 +53,7 @@ function updateTime() {
     let minutes = now.getMinutes();
     let seconds = now.getSeconds();
     let ampm = hours >= 12 ? "pm" : "am";
+    // Convert to 12-hour format for display
     hours = hours % 12 || 12;
     minutes = minutes.toString().padStart(2, "0");
     seconds = seconds.toString().padStart(2, "0");
@@ -56,6 +66,7 @@ function updateTime() {
 
     const colon = `<span class="blink">:</span>`;
     let timeString = `It is ${hours}${colon}${minutes} ${ampm}.`;
+    // Check if the current time (in h:mm) matches any wish time.
     if (wishTimes.includes(`${hours}:${minutes}`)) {
         timeString += " Make a wish.";
     }
@@ -66,11 +77,11 @@ function updateTime() {
     if (remainingHours > 0) {
         countdownParts.push(`${remainingHours} hour${remainingHours !== 1 ? 's' : ''}`);
     }
-    if (remainingMinutes > 0) {
+    if (remainingHours > 0 || remainingMinutes > 0) {
         countdownParts.push(`${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''}`);
     }
     countdownParts.push(`${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}`);
-    
+
     if (countdownParts.length > 2) {
         countdownText += countdownParts.join(", ");
         countdownText = countdownText.replace(/, ([^,]+)$/, ", and $1");
