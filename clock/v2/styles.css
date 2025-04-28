@@ -1,0 +1,124 @@
+/* Page layout: center everything */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: sans-serif;
+}
+
+/* Outer clock container:
+   - 300x300 px for demo,
+   - 4px border (less than before, so face is bigger). */
+.clock {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  border: 4px solid #333;     /* thinner border => larger face */
+  border-radius: 50%;
+  background: #f0f0f0;
+  box-sizing: border-box;
+}
+
+/* The actual white face, inset by the border thickness.
+   => 300px - (4px * 2) = 292px diameter. */
+.face {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border-radius: 50%;
+  background: #fff;
+  z-index: 1;
+}
+
+/* Container for the notch wrappers */
+.notches {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
+
+/* Each notchWrap is placed at the clock center and rotated in JS */
+.notchWrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center; /* rotate around the clock’s center */
+}
+
+/* The actual notch: pinned at its bottom center,
+   so we can translate it up the same amount for both thin & thick notches. */
+.notch {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  transform-origin: bottom center; /* the bottom is the pivot */
+  background: #333;
+  width: 1px;
+  height: 10px;
+  z-index: 2;
+}
+
+/* Thicker/longer notches for hour marks (every 5 minutes).
+   We keep the same bottom pivot & translation so their bottom
+   lands on the exact same radius as the thin notches. */
+.notch.thick {
+  width: 2px;
+  height: 10px;
+}
+
+/* Clock hands: anchored at the bottom center (the clock’s midpoint).
+   We'll specify absolute pixel lengths now so they stay inside the face. */
+.hand {
+  position: absolute;
+  bottom: 50%;     /* pivot at the center vertically */
+  left: 50%;
+  transform-origin: bottom;  /* rotate around that pivot */
+  transform: translateX(-50%) rotate(0deg);
+  z-index: 3;
+}
+
+/* Hour hand: ~60px long, thick */
+.hour-hand {
+  width: 2px;
+  height: 142px;    /* adjust as needed */
+  background: blue;
+  /* border-radius: 4px; */
+}
+
+/* Minute hand: ~85px long, medium thickness */
+.minute-hand {
+  width: 2px;
+  height: 142px;    /* adjust as needed */
+  background: green;
+  /* border-radius: 4px; */
+}
+
+/* Second hand: ~95px long, thin, red */
+.second-hand {
+  width: 2px;
+  height: 142px;    /* adjust as needed */
+  background: red;
+  /* border-radius: 4px; */
+}
+
+/* Center pivot */
+.center {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #333;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+}

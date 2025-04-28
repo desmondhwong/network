@@ -1,0 +1,143 @@
+/* Page layout: center everything with some margin */
+html, body {
+  margin: 20px;
+  padding: 0;
+  min-height: 100vh;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: sans-serif;
+}
+
+/* Responsive clock container:
+   - Uses 90vmin to fill most of the viewport,
+   - Minimum size 300px diameter.
+*/
+.clock {
+  position: relative;
+  width: 90vmin;
+  height: 90vmin;
+  min-width: 300px;
+  min-height: 300px;
+  border: 2px solid black;
+  border-radius: 50%;
+  background: #f0f0f0;
+  box-sizing: border-box;
+}
+
+/* White face fills the clock container */
+.face {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: #fff;
+  z-index: 1;
+}
+
+/* Peace symbol overlay covers the entire face */
+.peace-symbol {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Vertical line: exactly from 12 to 6 */
+.peace-vertical {
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  background: black;
+}
+
+/* Diagonals for 7:23.
+   They extend from the center (50% height) to the edge.
+   To orient the peace symbol “right side up,” we use:
+   - One line rotated to 318° (i.e. 138° + 180°)
+   - The other rotated to 41.5° (i.e. 221.5° + 180° mod 360) */
+.peace-diag1,
+.peace-diag2 {
+  position: absolute;
+  width: 2px;
+  height: 50%;
+  background: black;
+  top: 50%;
+  left: 50%;
+  transform-origin: top center;
+}
+
+.peace-diag1 {
+  transform: translateX(-50%) rotate(318deg);
+}
+.peace-diag2 {
+  transform: translateX(-50%) rotate(41.5deg);
+}
+
+/* Center pivot */
+.center {
+  display: none;
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: black;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+}
+
+/* Common styling for hour and minute hands.
+   They are anchored at the clock center (bottom: 50%) and use a bottom pivot.
+   Their heights are defined as a percentage of the clock container. */
+.hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  width: 2px;
+  transform-origin: bottom;
+  transform: translateX(-50%) rotate(0deg);
+  z-index: 3;
+}
+
+/* Hour hand: 50% of the clock's height */
+.hour-hand {
+  height: 50%;
+  background: black;
+}
+
+/* Minute hand: 50% of the clock's height */
+.minute-hand {
+  height: 50%;
+  background: black;
+}
+
+/* Second hand: spans the full diameter of the clock face.
+   It is centered with transform-origin: center so that at 0 sec it is vertical. */
+/* .second-hand {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 100%;
+  background: black;
+  transform-origin: center;
+  transform: translateX(-50%) rotate(0deg);
+  z-index: 3;
+} */
+
+.second-hand {
+  height: 50%;
+  background: black;
+}

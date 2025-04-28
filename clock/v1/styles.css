@@ -1,0 +1,66 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background: #f0f0f0;
+  }
+  
+  .clock {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    border: 8px solid #333;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* All hands will be anchored at the center of the clock.
+     We position them with bottom: 50% & left: 50%, then use
+     translateX(-50%) to center horizontally, and set transform-origin to bottom. */
+  .hand {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom;
+    transform: translateX(-50%) rotate(0deg);
+  }
+  
+  /* Hour hand: shorter and thicker */
+  .hour-hand {
+    width: 8px;
+    height: 70px;
+    background: #333;
+    border-radius: 4px;
+  }
+  
+  /* Minute hand: longer and slightly thinner */
+  .minute-hand {
+    width: 6px;
+    height: 100px;
+    background: #666;
+    border-radius: 4px;
+  }
+  
+  /* Second hand: longest and thinnest, in red */
+  .second-hand {
+    width: 2px;
+    height: 120px;
+    background: red;
+    border-radius: 4px;
+  }
+  
+  /* A small circle in the center of the clock */
+  .center {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #333;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Prime Cell Visualizer</title>
+  <style>
+:root {
+  --ui-pad: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: var(--ui-pad);
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+/* Bottom‐right controls container */
+#bottomControls {
+  position: absolute;
+  bottom: var(--ui-pad);
+  right: var(--ui-pad);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+/* Individual buttons inside the bottom container */
+#aboutBtn,
+#toggleUI {
+  position: static;
+  margin: 0;
+}
+
+/* Top‐left UI panel */
+#controls {
+  position: absolute;
+  top: var(--ui-pad);
+  left: var(--ui-pad);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  z-index: 5;
+}
+
+#controls.hidden {
+  display: none;
+}
+
+#controls input[type="number"] {
+  width: 60px;
+  text-align: center;
+}
+
+.color-input {
+  width: 24px;
+  height: 24px;
+  border: none;
+  padding: 0;
+}
+
+/* SVG canvas */
+#canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  overflow: visible;
+  background: transparent;
+}
+
+/* About overlay */
+#aboutOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+#aboutContent {
+  background: #111;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: auto;
+}
+
+#aboutContent h2 {
+  margin-top: 0;
+}
+
+#aboutContent a {
+  color: #0af;
+}
+
+#aboutClose {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+  </style>
+</head>
+<body>
+
+  <!-- Show/Hide and About buttons -->
+  <div id="bottomControls">
+    <button id="aboutBtn">About</button>
+    <button id="toggleUI">Hide Controls</button>
+  </div>
+
+
+  <!-- Controls panel -->
+  <div id="controls">
+    <button id="prevPrime">« Prev Prime</button>
+    <input id="numInput" type="number" value="2" min="1">
+    <button id="nextPrime">Next Prime »</button>
+    <button id="randNum">Random #</button>
+    <button id="randPrime">Random Prime</button>
+    <button id="downloadSVG">Download SVG</button>
+    <label>Zoom <input id="zoomInput" type="number" value="100" step="any">%</label>
+    <button id="resetZoom">Reset Zoom</button>
+    <label>Mode
+      <select id="modeSelect">
+        <option value="recursive">Recursive</option>
+        <option value="trueSize">True Size</option>
+      </select>
+    </label>
+    <label>Background <input id="bgColor" type="color" class="color-input" value="#000000"></label>
+    <button id="resetColors">Reset Colors</button>
+    <div id="palette"></div>
+  </div>
+
+  <!-- SVG Canvas -->
+  <svg id="canvas" width="0" height="0"></svg>
+
+  <!-- About overlay -->
+  <div id="aboutOverlay">
+    <div id="aboutContent">
+      <button id="aboutClose">Close</button>
+      <h2>About This Generator</h2>
+      <p>
+        <!-- Placeholder text -->
+        This Prime Cell Visualizer generates graphical "prime cells" for any integer:
+        composite numbers are drawn as flat rows of units, primes recursively nest
+        subcells, and colors follow a gradient chain. You can zoom, change colors,
+        switch between recursive and true-size modes, and download the result as SVG.
+      </p>
+      <p>
+        Learn more on the
+        <a href="https://www.are.na/gyroscopic/prime-cells" target="_blank">project are.na channel</a>.
+      </p>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    // DOM refs
+    const svg           = document.getElementById('canvas');
+    const numInput      = document.getElementById('numInput');
+    const prevBtn       = document.getElementById('prevPrime');
+    const nextBtn       = document.getElementById('nextPrime');
+    const randNumBtn    = document.getElementById('randNum');
+    const randPrimeBtn  = document.getElementById('randPrime');
+    const dlBtn         = document.getElementById('downloadSVG');
+    const zoomInput     = document.getElementById('zoomInput');
+    const resetZoomBtn  = document.getElementById('resetZoom');
+    const modeSelect    = document.getElementById('modeSelect');
+    const bgInput       = document.getElementById('bgColor');
+    const resetCols     = document.getElementById('resetColors');
+    const paletteDiv    = document.getElementById('palette');
+    const toggleUI      = document.getElementById('toggleUI');
+    const controls      = document.getElementById('controls');
+    const aboutBtn      = document.getElementById('aboutBtn');
+    const aboutOverlay  = document.getElementById('aboutOverlay');
+    const aboutClose    = document.getElementById('aboutClose');
+
+    // color chain
+    let edgeColors = ['#ffc0cb','#00ff00','#ffa500','#0000ff','#800080','#ff0000','#ffff00'];
+    let baseUnitW = null, lastMode = 'recursive';
+
+    function buildPalette(){
+      paletteDiv.innerHTML = '';
+      edgeColors.forEach((col,i)=>{
+        const inp = document.createElement('input');
+        inp.type='color'; inp.value=col; inp.className='color-input';
+        inp.addEventListener('input', ()=>{
+          edgeColors[i] = inp.value;
+          drawCurrent();
+        });
+        paletteDiv.appendChild(inp);
+      });
+    }
+    buildPalette();
+
+    // primality & random
+    function isPrime(n){
+      if(n<2||n%1) return false;
+      if(n===2) return true;
+      if(n%2===0) return false;
+      for(let i=3;i*i<=n;i+=2) if(n%i===0) return false;
+      return true;
+    }
+    function nextPrime(n){ let i=n+1; while(!isPrime(i)) i++; return i; }
+    function prevPrime(n){ let i=n-1; while(i>1&&!isPrime(i)) i--; return i>1?i:2; }
+    function randInt(max){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]%max; }
+    function randNum(){ return randInt(10000); }
+    function randPrime(){ let p; do{p=randNum()}while(!isPrime(p)); return p; }
+
+    // zoom step
+    function getZoomStep(z){
+      return z>5 ? 1 : 0.01;
+    }
+
+    // gradient index
+    function gradIndex(n){
+      if(!isPrime(n)) return n%2===0?0:1;
+      if(n===2) return 0;
+      if(n===3) return 1;
+      return gradIndex((n-1)/2)+1;
+    }
+
+    // SVG helpers
+    function clearSVG(){ svg.innerHTML=''; }
+    function createGradient(id, edge, center){
+      const old=document.getElementById(id);
+      if(old) old.remove();
+      const defs=document.createElementNS(svg.namespaceURI,'defs');
+      const g=document.createElementNS(svg.namespaceURI,'radialGradient');
+      g.id=id; ['cx','cy','r','fx','fy'].forEach(a=>g.setAttribute(a,'50%'));
+      [['0%',center],['100%',edge]].forEach(([off,col])=>{
+        const stop=document.createElementNS(svg.namespaceURI,'stop');
+        stop.setAttribute('offset',off);
+        stop.setAttribute('stop-color',col);
+        g.appendChild(stop);
+      });
+      defs.appendChild(g); svg.appendChild(defs);
+    }
+    function createCircle(cx,cy,r,fill){
+      const c=document.createElementNS(svg.namespaceURI,'circle');
+      c.setAttribute('cx',cx);
+      c.setAttribute('cy',cy);
+      c.setAttribute('r',r);
+      c.setAttribute('fill',fill);
+      svg.appendChild(c);
+    }
+
+    // draw currently
+    function drawCurrent(){
+      clearSVG();
+      const n=+numInput.value||0;
+      if(n<1) return;
+      document.body.style.background=bgInput.value;
+
+      const pad=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ui-pad'));
+      const ww=window.innerWidth-pad*2;
+      const hh=window.innerHeight-pad*2-controls.offsetHeight;
+      const fit=Math.min(ww,hh);
+
+      const zoom=+zoomInput.value;
+      const mode=modeSelect.value;
+      let totalW, unitW;
+
+      if(mode==='trueSize'){
+        if(lastMode!=='trueSize'||baseUnitW===null) baseUnitW=fit/n;
+        unitW=baseUnitW*(zoom/100);
+        totalW=unitW*n;
+      } else {
+        unitW=null;
+        totalW=fit*(zoom/100);
+      }
+      lastMode=mode;
+
+      svg.setAttribute('width',totalW);
+      svg.setAttribute('height',totalW);
+      svg.style.width=totalW+'px';
+      svg.style.height=totalW+'px';
+
+      drawCell(n, totalW/2, totalW/2, totalW, unitW);
+    }
+
+    function drawCell(n, cx, cy, sizeW, unitW){
+      const idx=Math.min(edgeColors.length-1,gradIndex(n));
+      let edge, center;
+      if(idx===0){ edge='white'; center=edgeColors[0]; }
+      else        { edge=edgeColors[idx]; center='white'; }
+      const gid=`g_${n}_${cx}_${cy}`;
+      createGradient(gid, edge, center);
+      createCircle(cx, cy, sizeW/2, `url(#${gid})`);
+
+      if(!isPrime(n)||n===2||n===3){
+        drawFlat(n, cx, cy, sizeW, unitW);
+        return;
+      }
+      const sub=(n-1)/2;
+      if(unitW!==null){
+        const lW=sub*unitW;
+        const off=(lW/2)+(unitW/2);
+        drawCell(sub, cx-off, cy, lW, unitW);
+        drawCell(sub, cx+off, cy, lW, unitW);
+        createCircle(cx, cy, unitW/2, 'black');
+      } else {
+        const u=sizeW/n, lW=sub*u, off=(sizeW-lW)/2;
+        drawCell(sub, cx-off, cy, lW, null);
+        drawCell(sub, cx+off, cy, lW, null);
+        createCircle(cx, cy, u/2, 'black');
+      }
+    }
+
+    function drawFlat(n, cx, cy, sizeW, unitW){
+      const w=unitW||sizeW/n;
+      let x=cx-(w*n)/2+w/2;
+      for(let i=0;i<n;i++){
+        const fill=(n===3&&i===1)?'black':'white';
+        createCircle(x, cy, w/2, fill);
+        x+=w;
+      }
+    }
+
+    // events
+    numInput.addEventListener('input', drawCurrent);
+    prevBtn.onclick     = ()=>{ numInput.value=prevPrime(+numInput.value||2); drawCurrent(); };
+    nextBtn.onclick     = ()=>{ numInput.value=nextPrime(+numInput.value||2); drawCurrent(); };
+    randNumBtn.onclick  = ()=>{ numInput.value=randNum(); drawCurrent(); };
+    randPrimeBtn.onclick= ()=>{ numInput.value=randPrime(); drawCurrent(); };
+    dlBtn.onclick       = ()=>{
+      const s=new XMLSerializer().serializeToString(svg);
+      const b=new Blob([s],{type:'image/svg+xml'});
+      const url=URL.createObjectURL(b);
+      const a=document.createElement('a');
+      a.href=url; a.download=`prime-${numInput.value}.svg`;
+      a.click(); URL.revokeObjectURL(url);
+    };
+
+    zoomInput.addEventListener('input', drawCurrent);
+    zoomInput.addEventListener('change', drawCurrent);
+
+    resetZoomBtn.onclick=()=>{
+      zoomInput.value=100;
+      if(modeSelect.value==='recursive') baseUnitW=null;
+      drawCurrent();
+    };
+
+    bgInput.addEventListener('input', drawCurrent);
+
+    resetCols.onclick   = ()=>{
+      edgeColors=['#ffc0cb','#00ff00','#ffa500','#0000ff','#800080','#ff0000','#ffff00'];
+      buildPalette(); drawCurrent();
+    };
+
+    modeSelect.addEventListener('change', ()=>{
+      if(modeSelect.value==='recursive'){
+        zoomInput.value=100;
+        baseUnitW=null;
+      }
+      drawCurrent();
+    });
+
+    toggleUI.onclick    = ()=>{
+      controls.classList.toggle('hidden');
+      toggleUI.textContent = controls.classList.contains('hidden') ? 'Show Controls' : 'Hide Controls';
+    };
+
+    // About overlay logic
+    aboutBtn.onclick    = ()=> { aboutOverlay.style.display = 'flex'; };
+    aboutClose.onclick  = ()=> { aboutOverlay.style.display = 'none'; };
+
+    // global key handler
+    document.addEventListener('keydown', e=>{
+      const key=e.key;
+      if(key==='-'||key==='_'||key==='='||key==='+'){
+        e.preventDefault();
+        let z=+zoomInput.value;
+        const step=getZoomStep(z);
+        if(key==='-'||key==='_') z=Math.max(0.01, z-step);
+        else                      z=z+step;
+        zoomInput.value = z.toFixed(z>5?0:2);
+        drawCurrent();
+      }
+      if(key.startsWith('Arrow')){
+        e.preventDefault();
+        let v=+numInput.value||0;
+        if(key==='ArrowUp')    numInput.value=v+1;
+        if(key==='ArrowDown')  numInput.value=Math.max(1,v-1);
+        if(key==='ArrowLeft')  numInput.value=prevPrime(v||2);
+        if(key==='ArrowRight') numInput.value=nextPrime(v||2);
+        drawCurrent();
+      }
+    }, true);
+
+    // initial
+    drawCurrent();
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+/* Page layout: center everything */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: sans-serif;
+}
+
+/* Outer clock container (300x300, thin border) */
+.clock {
+  position: relative;
+  width: 600px;
+  height: 600px;
+  border: 2px solid black;
+  border-radius: 50%;
+  background: #f0f0f0;
+  box-sizing: border-box;
+}
+
+/* White face, inset by 4px => ~292px diameter inside */
+.face {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  border-radius: 50%;
+  background: #fff;
+  z-index: 1;
+}
+
+/* Peace symbol overlay */
+.peace-symbol {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  border-radius: 50%;
+  z-index: 10; /* above the face */
+  pointer-events: none;
+}
+
+/* Vertical line: from 12 to 6 */
+.peace-vertical {
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  background: black;
+}
+
+/* Diagonals for 7:23, but flipped so the symbol is upright:
+   Previously angles from 12: 138° and 221.5°.
+   Now we rotate them 180° to appear in the bottom half:
+   => 138° + 180° = 318° and 221.5° + 180° = 401.5° (same as 41.5° mod 360).
+   We'll draw each line from the center (50%) outward ~50% of the face. */
+.peace-diag1,
+.peace-diag2 {
+  position: absolute;
+  width: 2px;
+  height: 50%;
+  background: black;
+  top: 50%;
+  left: 50%;
+  transform-origin: top center;
+}
+
+/* Flip angles: diag1 at 318°, diag2 at 41.5° */
+.peace-diag1 {
+  transform: translateX(-50%) rotate(318deg);
+}
+.peace-diag2 {
+  transform: translateX(-50%) rotate(41.5deg);
+}
+
+/* Center pivot on top */
+.center {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: black;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+}
+
+/* Hour & minute hands:
+   anchored at bottom center (the clock’s center).
+   Just adjust their lengths below. */
+.hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  width: 2px;
+  transform-origin: bottom;
+  transform: translateX(-50%) rotate(0deg);
+  z-index: 3;
+}
+
+/* Hour hand (red), shorter */
+.hour-hand {
+  height: 298px;
+  background: red;
+}
+
+/* Minute hand (green), a bit longer */
+.minute-hand {
+  height: 298px;
+  background: red;
+}
+
+/* Second hand (red) spans the full face diameter.
+   Anchored at the center with transform-origin: center => at 0s it's vertical top-to-bottom. */
+.second-hand {
+  position: absolute;
+  width: 2px;
+  height: 596px; /* same as face diameter */
+  top: 50%;
+  left: 50%;
+  background: red;
+  transform-origin: center;
+  transform: translate(-50%, -50%) rotate(0deg);
+  z-index: 3;
+}
