@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Prime Cell Visualizer</title>
+  <style>
+:root {
+  --ui-pad: 12px;
+  --btn-min-width: 44px;
+  --btn-min-height: 44px;
+  --btn-font-size: 16px;
+  --bg-overlay: rgba(0,0,0,0.85);
+  --ui-bg: rgba(0,0,0,0.7);
+  --panel-radius: 6px;
+  --font-sans: system-ui, sans-serif;
+  --button-bg: #222;
+  --button-border: #ccc;
+  --kbd-bg: #eef;
+  --kbd-border: #ccd;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: var(--ui-pad);
+  background: #000;
+  color: #fff;
+  overflow: hidden;
+  font-family: var(--font-sans);
+}
+/* Controls panel */
+#controls {
+  position: absolute;
+  top: var(--ui-pad);
+  left: var(--ui-pad);
+  right: var(--ui-pad);
+  background: var(--ui-bg);
+  padding: var(--ui-pad);
+  border-radius: var(--panel-radius);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  align-items: center;
+  z-index: 5;
+}
+#controls.hidden { display:none; }
+#controls button,
+#controls select,
+#controls input[type="number"],
+#controls input[type="color"] {
+  min-width: var(--btn-min-width);
+  min-height: var(--btn-min-height);
+  font-size: var(--btn-font-size);
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  color: #fff;
+}
+#controls input[type="number"] {
+  width: fit-content;
+  min-width: 4ch;
+  font-family: monospace;
+  text-align: center;
+}
+/* Palette swatches */
+.color-input {
+  width: 32px;
+  height: 32px;
+  border: none;
+  cursor: pointer;
+}
+/* Bottom controls */
+#bottomControls {
+  position: absolute;
+  bottom: var(--ui-pad);
+  right: var(--ui-pad);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+#bottomControls button {
+  min-width: var(--btn-min-width);
+  min-height: var(--btn-min-height);
+}
+/* SVG canvas */
+#canvas {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  overflow: visible;
+  background: transparent;
+}
+/* Info panel */
+#infoPanel {
+  position: absolute;
+  bottom: var(--ui-pad);
+  left: var(--ui-pad);
+  background: var(--ui-bg);
+  padding: var(--ui-pad);
+  border-radius: var(--panel-radius);
+  max-width: 280px;
+  font-size: 14px;
+  z-index: 5;
+  color: #fff;
+}
+#infoPanel.hidden { display:none; }
+/* About overlay */
+#aboutOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: var(--bg-overlay);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ui-pad);
+  z-index: 20;
+}
+#aboutContent {
+  background: #fff;
+  color: #222;
+  padding: 1.5rem;
+  border-radius: 8px;
+  max-width: 90%; max-height: 80vh;
+  overflow: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  line-height: 1.5;
+}
+#aboutContent h2 { margin-top:0; color:#111; }
+#aboutContent p { margin-bottom:1rem; }
+#aboutContent a { color:#0066cc; text-decoration:none; }
+#aboutContent a:hover { text-decoration:underline; }
+#aboutClose {
+  position:absolute; top:16px; right:16px;
+  background:var(--button-bg);
+  border:1px solid var(--button-border);
+  border-radius:4px;
+  padding:6px 10px;
+  cursor:pointer;
+  color:#fff;
+}
+/* Shortcuts table in About */
+#shortcuts table {
+  width:100%; border-collapse:collapse; margin-top:0.5rem;
+}
+#shortcuts th, #shortcuts td {
+  padding:0.5rem; text-align:left;
+}
+#shortcuts thead th { border-bottom:2px solid #ddd; }
+#shortcuts tbody tr:nth-child(even){ background:#f9f9f9; }
+#shortcuts kbd {
+  display:inline-block; padding:0.2em 0.4em; font-size:0.9em;
+  background:var(--kbd-bg); border:1px solid var(--kbd-border);
+  border-radius:3px;
+}
+/* Responsive */
+@media(max-width:600px){
+  #controls { grid-template-columns:1fr; }
+  #bottomControls { flex-direction:column-reverse; }
+}
+  </style>
+</head>
+<body>
+
+  <!-- bottom controls -->
+  <div id="bottomControls">
+    <button id="infoToggle"    aria-label="Toggle Info Panel">Info</button>
+    <button id="aboutBtn"      aria-label="Open About Panel">About</button>
+    <button id="toggleUI"      aria-label="Toggle Controls">Hide Controls</button>
+  </div>
+
+  <!-- main controls -->
+  <div id="controls">
+    <button id="prevPrime"     aria-label="Previous Prime">« Prev</button>
+    <input  id="numInput"      type="number" value="2" min="1" aria-label="Integer Input">
+    <button id="nextPrime"     aria-label="Next Prime">Next »</button>
+    <button id="randNum"       aria-label="Random Number">Rand #</button>
+    <button id="randPrime"     aria-label="Random Prime">Rand Prime</button>
+    <button id="shareBtn"      aria-label="Copy Shareable URL">Share</button>
+    <label>Zoom <input id="zoomInput" type="number" value="100" aria-label="Zoom Level">%</label>
+    <button id="zoomOut"       aria-label="Zoom Out">–</button>
+    <button id="zoomIn"        aria-label="Zoom In">+</button>
+    <button id="resetZoom"     aria-label="Reset Zoom">Reset Z</button>
+    <label>Mode 
+      <select id="modeSelect"  aria-label="Sizing Mode">
+        <option value="recursive">Recursive</option>
+        <option value="trueSize">True Size</option>
+      </select>
+    </label>
+    <label>Animate 
+      <input id="animToggle"   type="checkbox" aria-label="Toggle Animation">
+    </label>
+    <label>Themes 
+      <select id="themeSelect" aria-label="Preset Themes">
+        <option value="custom">Custom</option>
+        <option value="pastel">Pastel</option>
+        <option value="neon">Neon</option>
+        <option value="earth">Earth</option>
+        <option value="alchemy">Alchemy</option>
+      </select>
+    </label>
+    <div id="palette"></div>
+    <button id="resetColors"   aria-label="Reset Colors">Reset C</button>
+    <label>BG 
+      <input id="bgColor"      type="color" class="color-input" value="#000000" aria-label="Background Color">
+    </label>
+    <button id="downloadSVG"   aria-label="Download SVG">Download</button>
+  </div>
+
+  <!-- drawing canvas -->
+  <svg id="canvas"></svg>
+
+  <!-- info diagnostics -->
+  <div id="infoPanel" class="hidden" aria-live="polite">
+    <h3>Cell Diagnostics</h3>
+    <p>Value: <span id="infoValue"></span></p>
+    <p>Depth: <span id="infoDepth"></span></p>
+    <p>Chain: <span id="infoChain"></span></p>
+    <p>Root: <span id="infoRoot"></span></p>
+    <p>Nuclei: <span id="infoNuclei"></span></p>
+  </div>
+
+  <!-- about overlay -->
+  <div id="aboutOverlay">
+    <div id="aboutContent">
+      <button id="aboutClose" aria-label="Close About">Close</button>
+      <h2>About This Generator</h2>
+      <p>
+        This Prime Cell Visualizer generates graphical “prime cells” for any integer:
+        composites as flat rows, primes recursively nest subcells, with a dynamic
+        color-gradient chain, zoom modes, shareable URLs, and downloadable SVG.
+      </p>
+      <hr>
+      <div id="shortcuts">
+        <h3>Keyboard Shortcuts</h3>
+        <table>
+          <thead><tr><th>Key</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><kbd>[</kbd></td><td>Previous prime</td></tr>
+            <tr><td><kbd>]</kbd></td><td>Next prime</td></tr>
+            <tr><td><kbd>↑</kbd></td><td>Increase number</td></tr>
+            <tr><td><kbd>↓</kbd></td><td>Decrease number</td></tr>
+            <tr><td><kbd>-</kbd></td><td>Zoom out</td></tr>
+            <tr><td><kbd>=</kbd></td><td>Zoom in</td></tr>
+            <tr><td><kbd>Ctrl+L</kbd></td><td>Copy shareable URL</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    // ─── DOM refs ────────────────────────────────────────────
+    const svg           = document.getElementById('canvas');
+    const controls      = document.getElementById('controls');
+    const R = {
+      numInput    : document.getElementById('numInput'),
+      prevBtn     : document.getElementById('prevPrime'),
+      nextBtn     : document.getElementById('nextPrime'),
+      randNumBtn  : document.getElementById('randNum'),
+      randPrimeBtn: document.getElementById('randPrime'),
+      shareBtn    : document.getElementById('shareBtn'),
+      dlBtn       : document.getElementById('downloadSVG'),
+      zoomInput   : document.getElementById('zoomInput'),
+      zoomOutBtn  : document.getElementById('zoomOut'),
+      zoomInBtn   : document.getElementById('zoomIn'),
+      resetZoomBtn: document.getElementById('resetZoom'),
+      modeSelect  : document.getElementById('modeSelect'),
+      animToggle  : document.getElementById('animToggle'),
+      themeSelect : document.getElementById('themeSelect'),
+      bgInput     : document.getElementById('bgColor'),
+      resetCols   : document.getElementById('resetColors'),
+      paletteDiv  : document.getElementById('palette'),
+      toggleUI    : document.getElementById('toggleUI'),
+      infoToggle  : document.getElementById('infoToggle'),
+      infoPanel   : document.getElementById('infoPanel'),
+      infoValue   : document.getElementById('infoValue'),
+      infoDepth   : document.getElementById('infoDepth'),
+      infoChain   : document.getElementById('infoChain'),
+      infoRoot    : document.getElementById('infoRoot'),
+      infoNuclei  : document.getElementById('infoNuclei'),
+      aboutBtn    : document.getElementById('aboutBtn'),
+      aboutOverlay: document.getElementById('aboutOverlay'),
+      aboutClose  : document.getElementById('aboutClose'),
+    };
+
+    // ─── State & constants ───────────────────────────────────
+    let edgeColors   = ['#ffc0cb','#00ff00','#ffa500','#0000ff','#800080','#ff0000','#ffff00'];
+    let baseUnitW    = null, lastMode='recursive', animateEnabled=false;
+    const primeCache = new Map();
+
+    // ─── Gradients (`<defs>`) ────────────────────────────────
+    const defs = document.createElementNS(svg.namespaceURI,'defs');
+    svg.appendChild(defs);
+    function initGradients(){
+      defs.textContent = '';
+      edgeColors.forEach((col,i)=>{
+        const g = document.createElementNS(svg.namespaceURI,'radialGradient');
+        g.id = `grad-${i}`;
+        ['cx','cy','r','fx','fy'].forEach(a=>g.setAttribute(a,'50%'));
+        const s0 = document.createElementNS(svg.namespaceURI,'stop');
+        s0.setAttribute('offset','0%');
+        s0.setAttribute('stop-color', i===0? 'white':'white');
+        const s1 = document.createElementNS(svg.namespaceURI,'stop');
+        s1.setAttribute('offset','100%');
+        s1.setAttribute('stop-color', i===0? edgeColors[0]:col);
+        g.append(s0,s1);
+        defs.appendChild(g);
+      });
+    }
+    initGradients();
+
+    // ─── Palette builder ─────────────────────────────────────
+    function buildPalette(){
+      R.paletteDiv.innerHTML = '';
+      edgeColors.forEach((col,i)=>{
+        const inp = document.createElement('input');
+        inp.type='color'; inp.value=col; inp.className='color-input';
+        inp.title=`Level ${i} color`;
+        inp.addEventListener('input', ()=>{
+          edgeColors[i]=inp.value;
+          initGradients();
+          scheduleDraw();
+        });
+        R.paletteDiv.appendChild(inp);
+      });
+    }
+    buildPalette();
+
+    // ─── Primality + memo ────────────────────────────────────
+    function isPrime(n){
+      if(primeCache.has(n)) return primeCache.get(n);
+      let res;
+      if(n<2||n%1!==0) res=false;
+      else if(n===2)   res=true;
+      else if(n%2===0) res=false;
+      else {
+        res = true;
+        for(let i=3;i*i<=n;i+=2){
+          if(n%i===0){ res=false; break; }
+        }
+      }
+      primeCache.set(n,res);
+      return res;
+    }
+    function nextPrime(n){ let i=n+1; while(!isPrime(i)) i++; return i; }
+    function prevPrime(n){ let i=n-1; while(i>1&&!isPrime(i)) i--; return i>1?i:2; }
+    function randInt(max){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]%max; }
+    function randNum(){ return randInt(10000); }
+    function randPrime(){ let p; do{p=randNum()}while(!isPrime(p)); return p; }
+
+    function gradIndex(n){
+      if(!isPrime(n)) return (n%2===0?0:1);
+      if(n===2)       return 0;
+      if(n===3)       return 1;
+      return gradIndex((n-1)/2)+1;
+    }
+
+    // ─── Fit calculation ──────────────────────────────────────
+    let fit=0;
+    function computeFit(){
+      const pad = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ui-pad'));
+      const ww  = window.innerWidth - pad*2;
+      const hh  = window.innerHeight - pad*2 - controls.offsetHeight;
+      return Math.min(ww, hh);
+    }
+    window.addEventListener('resize', ()=>{ fit=computeFit(); scheduleDraw(); });
+    fit = computeFit();
+
+    // ─── Draw scheduler ───────────────────────────────────────
+    let drawPending=false;
+    function scheduleDraw(){
+      if(!drawPending){
+        drawPending=true;
+        requestAnimationFrame(()=>{
+          drawPending=false;
+          draw();
+        });
+      }
+    }
+
+    // ─── Draw + Info ──────────────────────────────────────────
+    function draw(){
+      // clear circles (keep <defs>)
+      while(svg.childNodes.length>1) svg.removeChild(svg.lastChild);
+
+      const n = +R.numInput.value||0;
+      if(n<1) return;
+      document.body.style.background = R.bgInput.value;
+
+      // sizing
+      const zoom = +R.zoomInput.value;
+      const mode = R.modeSelect.value;
+      let totalW, unitW;
+      if(mode==='trueSize'){
+        if(lastMode!=='trueSize'||baseUnitW===null) baseUnitW = fit/n;
+        unitW  = baseUnitW*(zoom/100);
+        totalW = unitW * n;
+      } else {
+        unitW  = null;
+        totalW = fit * (zoom/100);
+      }
+      lastMode = mode;
+
+      svg.setAttribute('width',  totalW);
+      svg.setAttribute('height', totalW);
+      svg.style.width  = totalW+'px';
+      svg.style.height = totalW+'px';
+
+      drawCell(n, totalW/2, totalW/2, totalW, unitW);
+      updateInfo(n);
+    }
+
+    function drawCell(n,cx,cy,sizeW,unitW){
+      // membrane
+      const idx = Math.min(edgeColors.length-1, gradIndex(n));
+      createCircle(cx, cy, sizeW/2, `url(#grad-${idx})`);
+
+      // flat or small prime
+      if(!isPrime(n)||n===2||n===3){
+        drawFlat(n,cx,cy,sizeW,unitW);
+        return;
+      }
+      // recursive
+      const sub=(n-1)/2;
+      if(unitW!==null){
+        const lW = sub*unitW;
+        const off=(lW/2)+(unitW/2);
+        drawCell(sub, cx-off, cy, lW, unitW);
+        drawCell(sub, cx+off, cy, lW, unitW);
+        createCircle(cx, cy, unitW/2,'black');
+      } else {
+        const u=sizeW/n, lW=sub*u, off=(sizeW-lW)/2;
+        drawCell(sub, cx-off, cy, lW,null);
+        drawCell(sub, cx+off, cy, lW,null);
+        createCircle(cx, cy, u/2,'black');
+      }
+    }
+
+    function drawFlat(n,cx,cy,sizeW,unitW){
+      const w = unitW||(sizeW/n);
+      let x = cx - (w*n)/2 + w/2;
+      for(let i=0;i<n;i++){
+        const fill = (n===3&&i===1)?'black':'white';
+        createCircle(x, cy, w/2, fill);
+        x += w;
+      }
+    }
+
+    function createCircle(cx,cy,r,fill){
+      const c=document.createElementNS(svg.namespaceURI,'circle');
+      c.setAttribute('cx',cx);
+      c.setAttribute('cy',cy);
+      c.setAttribute('r',r);
+      c.setAttribute('fill',fill);
+      if(animateEnabled){
+        c.style.transition='r 0.3s, fill 0.3s';
+      }
+      svg.appendChild(c);
+    }
+
+    // ─── Diagnostics ──────────────────────────────────────────
+    function getChain(n){
+      const chain=[];
+      while(isPrime(n)&&n>2){
+        chain.push(n);
+        n=(n-1)/2;
+      }
+      if(n>=2) chain.push(n);
+      return chain;
+    }
+    function updateInfo(n){
+      const chain = getChain(n);
+      const depth = chain.length;
+      const root  = !isPrime(2*n+1);
+      const nuclei= chain.filter(x=>x>=3).length;
+      R.infoValue.textContent  = n;
+      R.infoDepth.textContent  = depth;
+      R.infoChain.textContent  = chain.join(' → ');
+      R.infoRoot.textContent   = root?'Yes':'No';
+      R.infoNuclei.textContent = nuclei;
+    }
+
+    // ─── Shareable URL ────────────────────────────────────────
+    function encodeState(){
+      const s = {
+        n: +R.numInput.value,
+        zoom: +R.zoomInput.value,
+        mode: R.modeSelect.value,
+        anim: R.animToggle.checked,
+        theme: R.themeSelect.value,
+        bg: R.bgInput.value,
+        colors: edgeColors
+      };
+      return btoa(encodeURIComponent(JSON.stringify(s)));
+    }
+    function applyState(s){
+      R.numInput.value     = s.n;
+      R.zoomInput.value    = s.zoom;
+      R.modeSelect.value   = s.mode;
+      R.animToggle.checked = s.anim;
+      R.themeSelect.value  = s.theme;
+      R.bgInput.value      = s.bg;
+      edgeColors           = s.colors;
+      initGradients();
+      buildPalette();
+    }
+    R.shareBtn.addEventListener('click', ()=>{
+      const h = encodeState(),
+            url = `${location.origin+location.pathname}#${h}`;
+      navigator.clipboard.writeText(url)
+        .then(()=>alert('Share URL copied'));
+    });
+    if(location.hash.length>1){
+      try {
+        const obj = JSON.parse(decodeURIComponent(atob(location.hash.slice(1))));
+        applyState(obj);
+      } catch {}
+    }
+
+    // ─── Themes ───────────────────────────────────────────────
+    const themes = {
+      pastel:['#f8c4d0','#c4e0e5','#f5e4a4','#d0c4f8','#c4f8d0','#f8d0c4','#d0f8c4'],
+      neon :['#ff0055','#55ff00','#00ffee','#ff00ff','#ffff00','#00ff88','#ff8800'],
+      earth:['#a0522d','#8b4513','#deb887','#556b2f','#2f4f4f','#228b22','#c0a080'],
+      alchemy:['#003366','#006699','#3399cc','#66cccc','#99ffcc','#ccffcc','#ffffff']
+    };
+    R.themeSelect.addEventListener('change', ()=>{
+      if(R.themeSelect.value!=='custom'){
+        edgeColors = themes[R.themeSelect.value];
+        initGradients();
+        buildPalette();
+        R.themeSelect.value = 'custom';
+      }
+      scheduleDraw();
+    });
+
+    // ─── Animation toggle ────────────────────────────────────
+    R.animToggle.addEventListener('change', ()=>{
+      animateEnabled = R.animToggle.checked;
+    });
+
+    // ─── Event wiring ────────────────────────────────────────
+    R.numInput     .addEventListener('input', scheduleDraw);
+    R.prevBtn      .addEventListener('click', ()=>{ R.numInput.value=prevPrime(+R.numInput.value||2); scheduleDraw(); });
+    R.nextBtn      .addEventListener('click', ()=>{ R.numInput.value=nextPrime(+R.numInput.value||2); scheduleDraw(); });
+    R.randNumBtn   .addEventListener('click', ()=>{ R.numInput.value=randNum(); scheduleDraw(); });
+    R.randPrimeBtn .addEventListener('click', ()=>{ R.numInput.value=randPrime(); scheduleDraw(); });
+    R.dlBtn        .addEventListener('click', ()=>{
+      const s = new XMLSerializer().serializeToString(svg),
+            b = new Blob([s],{type:'image/svg+xml'}),
+            u = URL.createObjectURL(b),
+            a = document.createElement('a');
+      a.href=u; a.download=`prime-${R.numInput.value}.svg`; a.click();
+      URL.revokeObjectURL(u);
+    });
+
+    R.zoomInput    .addEventListener('input', scheduleDraw);
+    R.zoomInput    .addEventListener('change', scheduleDraw);
+    function getZoomStep(z){ return z>5?1:0.01; }
+    function stepZoom(d){
+      let z=parseFloat(R.zoomInput.value)||0,s=getZoomStep(z);
+      z=d<0?Math.max(0.01,z-s):z+s;
+      R.zoomInput.value = z.toFixed(s<1?2:0);
+      scheduleDraw();
+    }
+    R.zoomOutBtn.addEventListener('click', ()=>stepZoom(-1));
+    R.zoomInBtn .addEventListener('click', ()=>stepZoom(+1));
+    R.resetZoomBtn.addEventListener('click', ()=>{
+      R.zoomInput.value = 100;
+      if(R.modeSelect.value==='recursive') baseUnitW=null;
+      scheduleDraw();
+    });
+
+    R.bgInput    .addEventListener('input', scheduleDraw);
+    R.resetCols  .addEventListener('click', ()=>{
+      edgeColors=['#ffc0cb','#00ff00','#ffa500','#0000ff','#800080','#ff0000','#ffff00'];
+      initGradients(); buildPalette(); scheduleDraw();
+    });
+    R.modeSelect .addEventListener('change', ()=>{
+      if(R.modeSelect.value==='recursive') { R.zoomInput.value=100; baseUnitW=null; }
+      scheduleDraw();
+    });
+    R.toggleUI   .addEventListener('click', ()=>controls.classList.toggle('hidden'));
+    R.infoToggle .addEventListener('click', ()=>R.infoPanel.classList.toggle('hidden'));
+    R.aboutBtn   .addEventListener('click', ()=>R.aboutOverlay.style.display='flex');
+    R.aboutClose .addEventListener('click', ()=>R.aboutOverlay.style.display='none');
+
+    // ─── Keyboard nav ────────────────────────────────────────
+    document.addEventListener('keydown', e=>{
+      if(e.target.tagName!=='INPUT'){
+        if(e.key==='['){ e.preventDefault(); R.numInput.value=prevPrime(+R.numInput.value||2); scheduleDraw(); }
+        if(e.key===']'){ e.preventDefault(); R.numInput.value=nextPrime(+R.numInput.value||2); scheduleDraw(); }
+        if(e.key==='ArrowUp'){ e.preventDefault(); R.numInput.value= (+R.numInput.value||0)+1; scheduleDraw(); }
+        if(e.key==='ArrowDown'){ e.preventDefault(); R.numInput.value= Math.max(1,(+R.numInput.value||0)-1); scheduleDraw(); }
+        if(e.key==='-'||e.key==='_'){ e.preventDefault(); stepZoom(-1); }
+        if(e.key==='='||e.key==='+'){ e.preventDefault(); stepZoom(+1); }
+        if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='l'){ e.preventDefault(); R.shareBtn.click(); }
+      }
+    }, true);
+
+    // ─── Initial draw ────────────────────────────────────────
+    scheduleDraw();
+  })();
+  </script>
+</body>
+</html>

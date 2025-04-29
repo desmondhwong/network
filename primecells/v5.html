@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Prime Cell Visualizer</title>
+  <style>
+:root {
+  --ui-pad: 12px;
+  --btn-min-width: 44px;
+  --btn-min-height: 44px;
+  --btn-font-size: 16px;
+  --bg-overlay: rgba(0,0,0,0.85);
+  --ui-bg: rgba(0,0,0,0.7);
+  --panel-radius: 6px;
+  --font-sans: system-ui, sans-serif;
+  --button-bg: #222;
+  --button-border: #ccc;
+  --kbd-bg: #eef;
+  --kbd-border: #ccd;
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: var(--ui-pad); background: #000; color: #fff; overflow: hidden; font-family: var(--font-sans); }
+#controls { position: absolute; top: var(--ui-pad); left: var(--ui-pad); right: var(--ui-pad); background: var(--ui-bg); padding: var(--ui-pad); border-radius: var(--panel-radius); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; z-index: 5; }
+#controls.hidden { display: none; }
+#controls button, #controls select, #controls input[type="number"], #controls input[type="color"] { min-width: var(--btn-min-width); min-height: var(--btn-min-height); font-size: var(--btn-font-size); padding: 6px 8px; border-radius: 4px; border: 1px solid var(--button-border); background: var(--button-bg); color: #fff; }
+#controls label { display: flex; align-items: center; gap: 4px; }
+#controls input[type="number"] { width: fit-content; min-width: 4ch; font-family: monospace; text-align: center; }
+.color-input { width: 32px; height: 32px; border: none; cursor: pointer; }
+#bottomControls { position: absolute; bottom: var(--ui-pad); right: var(--ui-pad); display: flex; gap: 8px; z-index: 10; }
+#bottomControls button { min-width: var(--btn-min-width); min-height: var(--btn-min-height); font-size: var(--btn-font-size); padding: 6px 8px; border-radius: 4px; border: 1px solid var(--button-border); background: var(--button-bg); color: #fff; }
+#canvas { position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); background: transparent; }
+#infoPanel { position: absolute; bottom: var(--ui-pad); left: var(--ui-pad); background: var(--ui-bg); padding: var(--ui-pad); border-radius: var(--panel-radius); max-width: 300px; font-size: 14px; z-index: 10; }
+#infoPanel.hidden { display: none; }
+#aboutOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-overlay); display:none; align-items:center; justify-content:center; padding:var(--ui-pad); z-index:20; }
+#aboutContent { position:relative; background:#fff; color:#222; padding:1.5rem; border-radius:8px; max-width:90%; max-height:80vh; overflow:auto; box-shadow:0 4px 12px rgba(0,0,0,0.2); }
+#aboutClose { position:absolute; top:16px; right:16px; background:var(--button-bg); border:1px solid var(--button-border); border-radius:4px; padding:6px 10px; color:#fff; cursor:pointer; }
+#shortcuts table { width:100%; border-collapse:collapse; margin-top:0.5rem; }
+#shortcuts th, #shortcuts td { padding:0.5rem; text-align:left; }
+#shortcuts thead th { border-bottom:2px solid #ddd; }
+#shortcuts tbody tr:nth-child(even){ background:#f9f9f9; }
+#shortcuts kbd { display:inline-block; padding:0.2em 0.4em; background:var(--kbd-bg); border:1px solid var(--kbd-border); border-radius:3px; }
+@media(max-width:600px){ #controls { flex-direction:column; width:calc(100% - 2*var(--ui-pad)); } #bottomControls { flex-direction:column-reverse; } }
+  </style>
+</head>
+<body>
+
+<div id="bottomControls">
+  <button id="infoToggle">Show Info</button>
+  <button id="aboutBtn">About</button>
+  <button id="toggleUI">Hide Controls</button>
+</div>
+
+<div id="controls">
+  <button id="prevPrime">« Prev Prime</button>
+  <input id="numInput" type="number" value="2" min="1">
+  <button id="nextPrime">Next Prime »</button>
+  <button id="randNum">Random #</button>
+  <button id="randPrime">Random Prime</button>
+
+  <label>Zoom <input id="zoomInput" type="number" value="100" step="any">%</label>
+  <button id="zoomOut">–</button>
+  <button id="zoomIn">+</button>
+  <button id="resetZoom">Reset Zoom</button>
+
+  <label>Mode <select id="modeSelect"><option value="recursive">Recursive</option><option value="trueSize">Relative</option></select></label>
+
+  <div id="palette"></div>
+  <button id="resetColors">Reset Colors</button>
+
+  <label>Themes <select id="themeSelect">
+      <option value="default">Default</option>
+      <option value="pastel">Pastel</option>
+      <option value="neon">Neon</option>
+      <option value="earth">Earth</option>
+      <option value="alchemy">Alchemy</option>
+      <option value="custom">Custom</option>
+    </select></label>
+
+  <label>Background <input id="bgColor" type="color" class="color-input" value="#000000"></label>
+  <button id="downloadSVG">Download SVG</button>
+</div>
+
+<svg id="canvas"></svg>
+
+<div id="infoPanel" class="hidden"></div>
+
+<div id="aboutOverlay">
+  <div id="aboutContent">
+    <button id="aboutClose">Close</button>
+    <h2>About This Generator</h2>
+    <p>
+      <p>
+        The Prime Cell Visualizer implements the prime cell framework, wherein any odd prime <code>p</code> is expressed as <code>p = 2n + 1</code>, decomposed into two “lobes” of <code>n</code> units surrounding a central nucleus of size <code>1</code>. It produces graphical representations of integers: composite numbers are depicted as linear arrays of units, while primes are rendered as circular cells enclosed by a gradient “membrane.” Each lobe may recursively embed a smaller prime cell, generating structures that visually parallel 
+        <a href="https://en.wikipedia.org/wiki/Cunningham_chain" target="_blank">Cunningham chains of the first kind</a> and revealing recursive prime relationships at multiple levels. Users can adjust the zoom, toggle between recursive and relative sizing modes, select preset or custom color themes, and export the resulting diagrams as SVG files.
+      <br><br>
+      Learn more on the
+      <a href="https://www.are.na/gyroscopic/prime-cells" target="_blank">project are.na channel</a>.
+    </p>
+    <br>
+    <hr>
+    <br>
+    <h3>Keyboard Shortcuts</h3>
+    <div id="shortcuts">
+      <table>
+        <thead><tr><th>Key</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>[</kbd></td><td>Previous prime</td></tr>
+          <tr><td><kbd>]</kbd></td><td>Next prime</td></tr>
+          <tr><td><kbd>↑</kbd></td><td>Increase number by 1</td></tr>
+          <tr><td><kbd>↓</kbd></td><td>Decrease number by 1</td></tr>
+          <tr><td><kbd>-</kbd></td><td>Zoom out</td></tr>
+          <tr><td><kbd>=</kbd></td><td>Zoom in</td></tr>
+          <tr><td><kbd>c</kbd></td><td>Show/hide controls</td></tr>
+          <tr><td><kbd>?</kbd></td><td>Show/hide about panel</td></tr>
+          <tr><td><kbd>i</kbd></td><td>Show/hide info panel</td></tr>
+          <tr><td><kbd>m</kbd></td><td>Toggle mode</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const svg=document.getElementById('canvas');
+  const controls=document.getElementById('controls');
+  const R={
+    numInput:document.getElementById('numInput'), prevBtn:document.getElementById('prevPrime'), nextBtn:document.getElementById('nextPrime'),
+    randNumBtn:document.getElementById('randNum'), randPrimeBtn:document.getElementById('randPrime'), dlBtn:document.getElementById('downloadSVG'),
+    zoomInput:document.getElementById('zoomInput'), zoomOutBtn:document.getElementById('zoomOut'), zoomInBtn:document.getElementById('zoomIn'), resetZoomBtn:document.getElementById('resetZoom'),
+    modeSelect:document.getElementById('modeSelect'), bgInput:document.getElementById('bgColor'), resetCols:document.getElementById('resetColors'), paletteDiv:document.getElementById('palette'),
+    themeSelect:document.getElementById('themeSelect'), toggleUI:document.getElementById('toggleUI'), infoToggle:document.getElementById('infoToggle'), infoPanel:document.getElementById('infoPanel'),
+    infoValue:document.getElementById('infoValue'), infoDepth:document.getElementById('infoDepth'), infoRoot:document.getElementById('infoRoot'), infoTerm:document.getElementById('infoTerm'),
+    infoChain:document.getElementById('infoChain'), infoLobes:document.getElementById('infoLobes'), infoUnits:document.getElementById('infoUnits'), infoNuclei:document.getElementById('infoNuclei'),
+    aboutBtn:document.getElementById('aboutBtn'), aboutOverlay:document.getElementById('aboutOverlay'), aboutClose:document.getElementById('aboutClose')
+  };
+
+  let edgeColors = ['#ffc0cb','#00ff00','#ffa500','#0000ff','#800080','#ff0000','#ffff00'];
+  let savedCustomColors = edgeColors.slice();
+  const primeCache=new Map();
+
+  const defs=document.createElementNS(svg.namespaceURI,'defs'); svg.appendChild(defs);
+  function initGradients(){
+    defs.innerHTML = '';
+    edgeColors.forEach((col,i) => {
+      const g = document.createElementNS(svg.namespaceURI,'radialGradient');
+      g.id = `grad-${i}`;
+      ['cx','cy','r','fx','fy'].forEach(a=>g.setAttribute(a,'50%'));
+      const stop0 = document.createElementNS(svg.namespaceURI,'stop');
+      const stop1 = document.createElementNS(svg.namespaceURI,'stop');
+      stop0.setAttribute('offset','0%');
+      stop1.setAttribute('offset','100%');
+      if(i === 0) {
+        stop0.setAttribute('stop-color', col);
+        stop1.setAttribute('stop-color', 'white');
+      } else {
+        stop0.setAttribute('stop-color', 'white');
+        stop1.setAttribute('stop-color', col);
+      }
+      g.append(stop0, stop1);
+      defs.appendChild(g);
+    });
+  }
+
+  initGradients();
+
+  function buildPalette(){
+    R.paletteDiv.innerHTML = '';
+    edgeColors.forEach((col,i) => {
+      const inp = document.createElement('input');
+      inp.type = 'color';
+      inp.value = col;
+      inp.className = 'color-input';
+      inp.addEventListener('input', () => {
+        edgeColors[i] = inp.value;
+        // switch to custom when user manually edits colors
+        R.themeSelect.value = 'custom';
+        savedCustomColors = edgeColors.slice();
+        initGradients();
+        scheduleDraw();
+      });
+      R.paletteDiv.appendChild(inp);
+    });
+  }
+  buildPalette();
+
+  function isPrime(n){ if(primeCache.has(n)) return primeCache.get(n); let res; if(n<2||n%1!==0) res=false; else if(n===2) res=true; else if(n%2===0) res=false; else { res=true; for(let i=3;i*i<=n;i+=2) if(n%i===0){ res=false; break; } } primeCache.set(n,res); return res; }
+  function nextPrime(n){ let i=n+1; while(!isPrime(i)) i++; return i; }
+  function prevPrime(n){ let i=n-1; while(i>1&&!isPrime(i)) i--; return i>1?i:2; }
+  function randInt(m){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]%m; }
+  function randNum(){ return randInt(10000); }
+  function randPrime(){ let p; do{ p=randNum(); } while(!isPrime(p)); return p; }
+
+  let fit=0; function computeFit(){ const pad=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ui-pad')); const ww=window.innerWidth-pad*2; const hh=window.innerHeight-pad*2-controls.offsetHeight; return Math.min(ww,hh); }
+  window.addEventListener('resize',()=>{ fit=computeFit(); scheduleDraw(); }); fit=computeFit();
+
+  let drawPending=false; function scheduleDraw(){ if(!drawPending){ drawPending=true; requestAnimationFrame(()=>{ drawPending=false; draw(); }); }}
+
+  function gradIndex(n){ if(!isPrime(n)) return n%2?1:0; if(n===2) return 0; if(n===3) return 1; return gradIndex((n-1)/2)+1; }
+  function draw(){ while(svg.childNodes.length>1) svg.removeChild(svg.lastChild); const n=+R.numInput.value||0; if(n<1)return; document.body.style.background=R.bgInput.value; const zoom=+R.zoomInput.value; const mode=R.modeSelect.value; let totalW,unitW; if(mode==='trueSize'){ if(baseUnitW===null) baseUnitW=fit/n; unitW=baseUnitW*(zoom/100); totalW=unitW*n; } else{ unitW=null; totalW=fit*(zoom/100); } svg.setAttribute('width',totalW); svg.setAttribute('height',totalW); svg.style.width=totalW+'px'; svg.style.height=totalW+'px'; drawCell(n,totalW/2,totalW/2,totalW,unitW); updateInfo(n); }
+  function drawCell(n,cx,cy,sizeW,unitW){ const idx=Math.min(edgeColors.length-1,gradIndex(n)); createCircle(cx,cy,sizeW/2,`url(#grad-${idx})`); if(!isPrime(n)||n<4){ return drawFlat(n,cx,cy,sizeW,unitW); } const sub=(n-1)/2; if(unitW!==null){ const lW=sub*unitW, off=(lW+unitW)/2; drawCell(sub,cx-off,cy,lW,unitW); drawCell(sub,cx+off,cy,lW,unitW); createCircle(cx,cy,unitW/2,'black'); } else{ const u=sizeW/n, lW=sub*u, off=(sizeW-lW)/2; drawCell(sub,cx-off,cy,lW,null); drawCell(sub,cx+off,cy,lW,null); createCircle(cx,cy,u/2,'black'); } }
+  function drawFlat(n,cx,cy,sizeW,unitW){ const w=unitW||sizeW/n; let x=cx-(w*n)/2+w/2; for(let i=0;i<n;i++){ createCircle(x,cy,w/2,(n===3&&i===1)?'black':'white'); x+=w; } }
+  function createCircle(cx,cy,r,fill){ const c=document.createElementNS(svg.namespaceURI,'circle'); c.setAttribute('cx',cx); c.setAttribute('cy',cy); c.setAttribute('r',r); c.setAttribute('fill',fill); svg.appendChild(c); }
+
+  // diagnostics
+  function getAllFactors(n) {
+    const facs = [];
+    for (let i = 1; i * i <= n; i++) {
+      if (n % i === 0) {
+        facs.push(i);
+        if (i !== n / i) facs.push(n / i);
+      }
+    }
+    return facs.sort((a, b) => a - b);
+  }
+
+  function getAncestors(n) {
+    const anc = [];
+    let cur = n;
+    while (true) {
+      const p = 2 * cur + 1;
+      if (isPrime(p)) {
+        anc.push(p);
+        cur = p;
+      } else {
+        break;
+      }
+    }
+    return anc.reverse();
+  }
+
+  function getDescendants(n) {
+    const des = [n];
+    let cur = n;
+    while (true) {
+      const nxt = (cur - 1) / 2;
+      if (isPrime(nxt)) {
+        des.push(nxt);
+        cur = nxt;
+      } else {
+        break;
+      }
+    }
+    return des;
+  }
+
+  function updateInfo(n) {
+    const panel = R.infoPanel;
+    panel.innerHTML = '';
+    if (!isPrime(n)) {
+      const factors = getAllFactors(n);
+      panel.innerHTML = `
+        <h3>Diagnostics</h3>
+        <p>Value: ${n} (Composite)</p>
+        <p>Number of Factors: ${factors.length}</p>
+        <p>Factors: ${factors.join(', ')}</p>
+      `;
+      return;
+    }
+    const above = getAncestors(n);
+    const below = getDescendants(n);
+    const depth = below.length - 1;
+    const rootAncestor = above.length > 0 ? above[0] : null;
+    const term = below[below.length - 1];
+    const hasAncestors = above.length > 0;
+    const hasTerm = below.length > 1;
+    let typeLabel;
+    if (!hasTerm) {
+      typeLabel = 'Terminal Prime';
+    } else if (!hasAncestors) {
+      typeLabel = 'Root Prime';
+    } else {
+      typeLabel = 'Recursive Prime';
+    }
+    const lobes = term === 2 ? Math.pow(2, depth) : Math.pow(2, depth + 1);
+    const units = term === 2 ? 2 : (term - 1) / 2;
+    const nuclei = n - lobes * units;
+    let chainStr = 'None';
+    if (hasAncestors || below.length > 1) {
+      const seg = '[' + below.join(' → ') + ']';
+      chainStr = hasAncestors ? above.join(' → ') + ' → ' + seg : seg;
+    }
+    panel.innerHTML = `
+      <h3>Diagnostics</h3>
+      <p>Value: ${n} (${typeLabel})</p>
+      <p>Recursion Depth: ${depth}</p>
+      <p>Root Prime: ${!hasAncestors ? 'Yes' : 'No (' + rootAncestor + ')'}</p>
+      <p>Terminal Prime: ${hasTerm ? 'No (' + term + ')' : 'Yes'}</p>
+      <p>Recursion Chain: ${chainStr}</p>
+      <p>Terminal Lobes: ${lobes}</p>
+      <p>Terminal Lobe Units: ${units}</p>
+      <p>Nuclei: ${nuclei}</p>
+    `;
+  }
+
+  // events
+  R.numInput.addEventListener('input',scheduleDraw);
+  R.prevBtn.addEventListener('click',()=>{ R.numInput.value=prevPrime(+R.numInput.value||2); scheduleDraw(); });
+  R.nextBtn.addEventListener('click',()=>{ R.numInput.value=nextPrime(+R.numInput.value||2); scheduleDraw(); });
+  R.randNumBtn.addEventListener('click',()=>{ R.numInput.value=randNum(); scheduleDraw(); });
+  R.randPrimeBtn.addEventListener('click',()=>{ R.numInput.value=randPrime(); scheduleDraw(); });
+  R.zoomInput.addEventListener('input',scheduleDraw);
+  function stepZoom(delta){ let z=+R.zoomInput.value||0; const s=z>5?1:0.01; z=delta<0?Math.max(0.01,z-s):z+s; R.zoomInput.value=z.toFixed(s<1?2:0); scheduleDraw(); }
+  R.zoomOutBtn.addEventListener('click',()=>stepZoom(-1));
+  R.zoomInBtn.addEventListener('click',()=>stepZoom(1));
+  R.resetZoomBtn.addEventListener('click',()=>{ baseUnitW=null; R.zoomInput.value=100; scheduleDraw(); });
+  R.modeSelect.addEventListener('change',()=>{ baseUnitW=null; R.zoomInput.value=100; scheduleDraw(); });
+  R.bgInput.addEventListener('input',scheduleDraw);
+  R.resetCols.addEventListener('click',()=>{ edgeColors=['#ffc0cb','#00ff00','#ffa500','#0000ff','#800080','#ff0000','#ffff00']; buildPalette(); initGradients(); scheduleDraw(); });
+  R.dlBtn.addEventListener('click',()=>{ const xml=new XMLSerializer().serializeToString(svg); const blob=new Blob([xml],{type:'image/svg+xml'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`prime-${R.numInput.value}.svg`; a.click(); URL.revokeObjectURL(url); });
+  const themes={pastel:['#f8c4d0','#c4e0e5','#f5e4a4','#d0c4f8','#c4f8d0','#f8d0c4','#d0f8c4'],neon:['#ff0055','#55ff00','#00ffee','#ff00ff','#ffff00','#00ff88','#ff8800'],earth:['#a0522d','#8b4513','#deb887','#556b2f','#2f4f4f','#228b22','#c0a080'],alchemy:['#003366','#006699','#3399cc','#66cccc','#99ffcc','#ccffcc','#ffffff']};
+  R.themeSelect.addEventListener('change', () => {
+    const v = R.themeSelect.value;
+    if (v === 'default') {
+      edgeColors = ['#ffc0cb','#00ff00','#ffa500','#0000ff','#800080','#ff0000','#ffff00'];
+    } else if (v === 'custom') {
+      // restore last custom colors
+      edgeColors = savedCustomColors.slice();
+    } else if (themes[v]) {
+      edgeColors = themes[v].slice();
+    }
+    buildPalette();
+    initGradients();
+    scheduleDraw();
+  });
+  R.toggleUI.addEventListener('click',()=>{ controls.classList.toggle('hidden'); R.toggleUI.textContent=controls.classList.contains('hidden')?'Show Controls':'Hide Controls'; });
+  R.infoToggle.addEventListener('click',()=>{ R.infoPanel.classList.toggle('hidden'); R.infoToggle.textContent=R.infoPanel.classList.contains('hidden')?'Show Info':'Hide Info'; });
+  R.aboutBtn.addEventListener('click',()=>R.aboutOverlay.style.display='flex');
+  R.aboutClose.addEventListener('click',()=>R.aboutOverlay.style.display='none');
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName !== 'INPUT') {
+      // existing shortcuts
+      if (e.key === '[') { e.preventDefault(); R.prevBtn.click(); }
+      if (e.key === ']') { e.preventDefault(); R.nextBtn.click(); }
+      if (e.key === '-' || e.key === '_') { e.preventDefault(); R.zoomOutBtn.click(); }
+      if (e.key === '=' || e.key === '+') { e.preventDefault(); R.zoomInBtn.click(); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); R.numInput.value = (+R.numInput.value + 1); scheduleDraw(); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); R.numInput.value = Math.max(1, +R.numInput.value - 1); scheduleDraw(); }
+      // new shortcuts
+      if (e.key.toLowerCase() === 'c') { e.preventDefault(); R.toggleUI.click(); }
+      if (e.key === '?') { e.preventDefault();
+        if (R.aboutOverlay.style.display === 'flex') R.aboutClose.click();
+        else R.aboutBtn.click();
+      }
+      if (e.key.toLowerCase() === 'i') { e.preventDefault(); R.infoToggle.click(); }
+      if (e.key.toLowerCase() === 'm') { e.preventDefault();
+        R.modeSelect.value = R.modeSelect.value === 'recursive' ? 'trueSize' : 'recursive';
+        R.modeSelect.dispatchEvent(new Event('change'));
+      }
+    }
+  });
+  scheduleDraw();
+})();
+</script>
+</body>
+</html>

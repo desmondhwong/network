@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Prime Cell Visualizer</title>
+  <style>
+:root {
+  --ui-pad: 12px;
+  --btn-min-size: 40px;
+  --btn-font-size: 14px;
+  --bg-overlay: rgba(0,0,0,0.85);
+  --ui-bg: rgba(0,0,0,0.7);
+  --panel-radius: 6px;
+  --font-sans: system-ui, sans-serif;
+  --button-bg: #222;
+  --button-border: #555;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: var(--ui-pad);
+  background: #000;
+  color: #fff;
+  font-family: var(--font-sans);
+  overflow: hidden;
+}
+/* Main controls panel */
+#controls {
+  position: absolute;
+  top: var(--ui-pad);
+  left: var(--ui-pad);
+  right: var(--ui-pad);
+  background: var(--ui-bg);
+  padding: var(--ui-pad);
+  border-radius: var(--panel-radius);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  align-items: center;
+  z-index: 10;
+}
+#controls.hidden { display: none; }
+#controls > * {
+  font-size: var(--btn-font-size);
+  min-width: var(--btn-min-size);
+  min-height: var(--btn-min-size);
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  border-radius: 4px;
+  padding: 6px;
+  color: #fff;
+}
+#controls label { display: flex; align-items: center; gap: 4px; }
+#controls input[type="number"] {
+  width: 4ch;
+  text-align: center;
+  font-family: monospace;
+}
+#controls select { padding: 4px; }
+/* Color palette */
+.color-input {
+  width: 28px;
+  height: 28px;
+  border: none;
+  cursor: pointer;
+}
+/* Bottom bar */
+#bottomControls {
+  position: absolute;
+  bottom: var(--ui-pad);
+  right: var(--ui-pad);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+#bottomControls button {
+  font-size: var(--btn-font-size);
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  border-radius: 4px;
+  padding: 6px;
+  color: #fff;
+  min-width: var(--btn-min-size);
+  min-height: var(--btn-min-size);
+}
+/* SVG canvas */
+#canvas {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: transparent;
+}
+/* Info panel */
+#infoPanel {
+  position: absolute;
+  bottom: var(--ui-pad);
+  left: var(--ui-pad);
+  background: var(--ui-bg);
+  padding: var(--ui-pad);
+  border-radius: var(--panel-radius);
+  font-size: 14px;
+  z-index: 10;
+}
+#infoPanel.hidden { display: none; }
+/* About overlay */
+#aboutOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: var(--bg-overlay);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ui-pad);
+  z-index: 20;
+}
+#aboutContent {
+  background: #fff;
+  color: #222;
+  padding: 1rem;
+  border-radius: 8px;
+  max-width: 90%; max-height: 80vh;
+  overflow: auto;
+}
+#aboutClose {
+  position: absolute; top: 16px; right: 16px;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  border-radius: 4px;
+  color: #fff;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- Main controls -->
+<div id="controls">
+  <button id="prevPrime">« Prev</button>
+  <input id="numInput" type="number" value="2" min="1">
+  <button id="nextPrime">Next »</button>
+  <button id="randNum">Rand #</button>
+  <button id="randPrime">Rand Prime</button>
+
+  <label>Mode:
+    <select id="modeSelect">
+      <option value="recursive">Recursive</option>
+      <option value="trueSize">True Size</option>
+    </select>
+  </label>
+
+  <button id="zoomOut">–</button>
+  <input id="zoomInput" type="number" value="100">
+  <button id="zoomIn">+</button>
+  <button id="resetZoom">Reset Z</button>
+
+  <label>BG:
+    <input id="bgColor" type="color" class="color-input" value="#000000">
+  </label>
+  <button id="downloadSVG">Download</button>
+
+  <label>Themes:
+    <select id="themeSelect">
+      <option value="custom">Custom</option>
+      <option value="pastel">Pastel</option>
+      <option value="neon">Neon</option>
+      <option value="earth">Earth</option>
+      <option value="alchemy">Alchemy</option>
+    </select>
+  </label>
+  <div id="palette"></div>
+  <button id="resetColors">Reset Colors</button>
+</div>
+
+<!-- SVG canvas -->
+<svg id="canvas"></svg>
+
+<!-- Info panel -->
+<div id="infoPanel" class="hidden" aria-live="polite">
+  <h3>Cell Diagnostics</h3>
+  <p>Value: <span id="infoValue"></span></p>
+  <p>Depth: <span id="infoDepth"></span></p>
+  <p>Chain: <span id="infoChain"></span></p>
+  <p>Root: <span id="infoRoot"></span></p>
+  <p>Nuclei: <span id="infoNuclei"></span></p>
+</div>
+
+<!-- Bottom bar -->
+<div id="bottomControls">
+  <button id="infoToggle">Info</button>
+  <button id="aboutBtn">About</button>
+  <button id="toggleUI">Hide Controls</button>
+</div>
+
+<!-- About overlay -->
+<div id="aboutOverlay">
+  <div id="aboutContent">
+    <button id="aboutClose">Close</button>
+    <h2>About This Generator</h2>
+    <p>This Prime Cell Visualizer generates graphical “prime cells” for any integer.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const svg = document.getElementById('canvas');
+  const R = {
+    numInput    : document.getElementById('numInput'),
+    prevBtn     : document.getElementById('prevPrime'),
+    nextBtn     : document.getElementById('nextPrime'),
+    randNumBtn  : document.getElementById('randNum'),
+    randPrimeBtn: document.getElementById('randPrime'),
+    dlBtn       : document.getElementById('downloadSVG'),
+    zoomInput   : document.getElementById('zoomInput'),
+    zoomOutBtn  : document.getElementById('zoomOut'),
+    zoomInBtn   : document.getElementById('zoomIn'),
+    resetZoomBtn: document.getElementById('resetZoom'),
+    modeSelect  : document.getElementById('modeSelect'),
+    themeSelect : document.getElementById('themeSelect'),
+    bgInput     : document.getElementById('bgColor'),
+    resetCols   : document.getElementById('resetColors'),
+    paletteDiv  : document.getElementById('palette'),
+    toggleUI    : document.getElementById('toggleUI'),
+    infoToggle  : document.getElementById('infoToggle'),
+    infoPanel   : document.getElementById('infoPanel'),
+    infoValue   : document.getElementById('infoValue'),
+    infoDepth   : document.getElementById('infoDepth'),
+    infoChain   : document.getElementById('infoChain'),
+    infoRoot    : document.getElementById('infoRoot'),
+    infoNuclei  : document.getElementById('infoNuclei'),
+    aboutBtn    : document.getElementById('aboutBtn'),
+    aboutOverlay: document.getElementById('aboutOverlay'),
+    aboutClose  : document.getElementById('aboutClose'),
+  };
+
+  let edgeColors = ['#ffc0cb','#00ff00','#ffa500','#0000ff','#800080','#ff0000','#ffff00'];
+  let baseUnitW = null;
+  const primeCache = new Map();
+
+  // SVG defs for gradients
+  const defs = document.createElementNS(svg.namespaceURI,'defs'); svg.appendChild(defs);
+  function initGradients(){
+    defs.textContent='';
+    edgeColors.forEach((col,i)=>{
+      const g = document.createElementNS(svg.namespaceURI,'radialGradient');
+      g.id = `grad-${i}`;
+      ['cx','cy','r','fx','fy'].forEach(a=> g.setAttribute(a,'50%'));
+      const s0 = document.createElementNS(svg.namespaceURI,'stop');
+      s0.setAttribute('offset','0%'); s0.setAttribute('stop-color','white');
+      const s1 = document.createElementNS(svg.namespaceURI,'stop');
+      s1.setAttribute('offset','100%'); s1.setAttribute('stop-color',col);
+      g.append(s0,s1); defs.appendChild(g);
+    });
+  }
+  initGradients();
+
+  function buildPalette(){
+    R.paletteDiv.innerHTML='';
+    edgeColors.forEach((col,i)=>{
+      const inp = document.createElement('input');
+      inp.type='color'; inp.value=col; inp.className='color-input';
+      inp.addEventListener('input', ()=>{ edgeColors[i]=inp.value; initGradients(); draw(); });
+      R.paletteDiv.appendChild(inp);
+    });
+  }
+  buildPalette();
+
+  function isPrime(n){
+    if(primeCache.has(n)) return primeCache.get(n);
+    let res = n>1 && [...Array(Math.floor(Math.sqrt(n))-1)].every((_,i)=> n%(i+2));
+    primeCache.set(n,!!res); return !!res;
+  }
+  function nextPrime(n){ let i=n+1; while(!isPrime(i)) i++; return i; }
+  function prevPrime(n){ let i=n-1; while(i>1&&!isPrime(i)) i--; return i>1?i:2; }
+  function randInt(max){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]%max; }
+  function randNum(){ return randInt(10000); }
+  function randPrime(){ let p; do{p=randNum()}while(!isPrime(p)); return p; }
+
+  function gradIndex(n){ if(!isPrime(n)) return n%2?1:0; return n<4? n-2: gradIndex((n-1)/2)+1; }
+
+  let fit = 0;
+  function computeFit(){ const pad=12, ww=window.innerWidth-pad*2, hh=window.innerHeight-pad*2-R.controlsHeight||0; fit=Math.min(ww,hh); return fit; }
+  window.addEventListener('resize', ()=>{ fit=computeFit(); draw(); });
+  fit = computeFit();
+
+  function draw(){
+    while(svg.childNodes.length>1) svg.removeChild(svg.lastChild);
+    const n=+R.numInput.value||1;
+    document.body.style.background=R.bgInput.value;
+    const zoom=+R.zoomInput.value;
+    const mode=R.modeSelect.value;
+    let totalW, unitW;
+    if(mode==='trueSize'){
+      if(baseUnitW===null) baseUnitW = fit/n;
+      unitW = baseUnitW*(zoom/100);
+      totalW = unitW*n;
+    } else {
+      unitW=null;
+      totalW=fit*(zoom/100);
+    }
+    svg.setAttribute('width',totalW); svg.setAttribute('height',totalW);
+    svg.style.width=totalW+'px'; svg.style.height=totalW+'px';
+    drawCell(n, totalW/2, totalW/2, totalW, unitW);
+    updateInfo(n);
+  }
+
+  function drawCell(n,cx,cy,sizeW,unitW){
+    const idx=Math.min(edgeColors.length-1, gradIndex(n));
+    createCircle(cx,cy,sizeW/2,`url(#grad-${idx})`);
+    if(!isPrime(n)||n<4){ drawFlat(n,cx,cy,sizeW,unitW); return; }
+    const sub=(n-1)/2;
+    if(unitW!==null){ const lW=sub*unitW, off=(lW+unitW)/2;
+      drawCell(sub,cx-off,cy,lW,unitW);
+      drawCell(sub,cx+off,cy,lW,unitW);
+      createCircle(cx,cy,unitW/2,'black');
+    } else {
+      const u=sizeW/n, lW=sub*u, off=(sizeW-lW)/2;
+      drawCell(sub,cx-off,cy,lW,null);
+      drawCell(sub,cx+off,cy,lW,null);
+      createCircle(cx,cy,u/2,'black');
+    }
+  }
+  function drawFlat(n,cx,cy,sizeW,unitW){
+    const w=unitW||(sizeW/n); let x=cx - (w*n)/2 + w/2;
+    for(let i=0;i<n;i++){ createCircle(x,cy,w/2, (n===3&&i===1)?'black':'white'); x+=w; }
+  }
+  function createCircle(cx,cy,r,fill){ const c=document.createElementNS(svg.namespaceURI,'circle'); c.setAttribute('cx',cx); c.setAttribute('cy',cy); c.setAttribute('r',r); c.setAttribute('fill',fill); svg.appendChild(c); }
+
+  function getChain(n){ const chain=[]; while(isPrime(n)&&n>2){ chain.push(n); n=(n-1)/2; } if(n>=2) chain.push(n); return chain; }
+  function updateInfo(n){ const chain=getChain(n); R.infoValue.textContent=n; R.infoDepth.textContent=chain.length; R.infoChain.textContent=chain.join(' → '); R.infoRoot.textContent=!isPrime(2*n+1)?'Yes':'No'; R.infoNuclei.textContent=chain.filter(x=>x>=3).length; }
+
+  // Events
+  R.prevBtn.addEventListener('click', ()=>{ R.numInput.value=prevPrime(+R.numInput.value); draw(); });
+  R.nextBtn.addEventListener('click', ()=>{ R.numInput.value=nextPrime(+R.numInput.value); draw(); });
+  R.randNumBtn.addEventListener('click', ()=>{ R.numInput.value=randNum(); draw(); });
+  R.randPrimeBtn.addEventListener('click', ()=>{ R.numInput.value=randPrime(); draw(); });
+
+  R.zoomInput.addEventListener('input', draw);
+  function step(d){ let z=+R.zoomInput.value, s=z>5?1:0.01; R.zoomInput.value=(z+(d*s)).toFixed(s<1?2:0); draw(); }
+  R.zoomOutBtn.addEventListener('click', ()=>step(-1));
+  R.zoomInBtn.addEventListener('click', ()=>step(1));
+  R.resetZoomBtn.addEventListener('click', ()=>{ baseUnitW=null; R.zoomInput.value=100; draw(); });
+
+  R.modeSelect.addEventListener('change', ()=>{ baseUnitW=null; R.zoomInput.value=100; draw(); });
+  R.numInput.addEventListener('input', draw);
+  R.bgInput.addEventListener('input', draw);
+
+  // Download SVG
+  R.dlBtn.addEventListener('click', ()=>{
+    const s=new XMLSerializer().serializeToString(svg);
+    const b=new Blob([s],{type:'image/svg+xml'});
+    const u=URL.createObjectURL(b);
+    const a=document.createElement('a'); a.href=u; a.download=`prime-${R.numInput.value}.svg`; a.click(); URL.revokeObjectURL(u);
+  });
+
+  // Themes
+  const themes={
+    pastel:['#f8c4d0','#c4e0e5','#f5e4a4','#d0c4f8','#c4f8d0','#f8d0c4','#d0f8c4'],
+    neon :['#ff0055','#55ff00','#00ffee','#ff00ff','#ffff00','#00ff88','#ff8800'],
+    earth:['#a0522d','#8b4513','#deb887','#556b2f','#2f4f4f','#228b22','#c0a080'],
+    alchemy:['#003366','#006699','#3399cc','#66cccc','#99ffcc','#ccffcc','#ffffff']
+  };
+  R.themeSelect.addEventListener('change', ()=>{
+    if(R.themeSelect.value!=='custom'){
+      edgeColors=themes[R.themeSelect.value]; initGradients(); buildPalette(); R.themeSelect.value='custom'; draw();
+    }
+  });
+
+  // UI toggles
+  R.toggleUI.addEventListener('click', ()=>document.getElementById('controls').classList.toggle('hidden'));
+  R.infoToggle.addEventListener('click', ()=>R.infoPanel.classList.toggle('hidden'));
+  R.aboutBtn.addEventListener('click', ()=>R.aboutOverlay.style.display='flex');
+  R.aboutClose.addEventListener('click', ()=>R.aboutOverlay.style.display='none');
+
+  // Keyboard
+  document.addEventListener('keydown', e=>{
+    if(e.target.tagName!=='INPUT'){
+      switch(e.key){
+        case '[': e.preventDefault(); R.prevBtn.click(); break;
+        case ']': e.preventDefault(); R.nextBtn.click(); break;
+        case 'ArrowUp': e.preventDefault(); R.numInput.value=+R.numInput.value+1; draw(); break;
+        case 'ArrowDown': e.preventDefault(); R.numInput.value=Math.max(1,+R.numInput.value-1); draw(); break;
+        case '-': case '_': e.preventDefault(); R.zoomOutBtn.click(); break;
+        case '=': case '+': e.preventDefault(); R.zoomInBtn.click(); break;
+      }
+    }
+  });
+
+  draw();
+})();
+</script>
+</body>
+</html>
