@@ -41,7 +41,7 @@ body {
   z-index: 5;
 }
 #controls.hidden { display: none; }
-#controls button, #controls select, #controls input {
+#controls button, #controls select, #controls input[type="number"], #controls input[type="color"] {
   min-width: var(--btn-min);
   min-height: var(--btn-min);
   font-size: var(--btn-font);
@@ -63,7 +63,8 @@ body {
   z-index: 10;
 }
 #bottomControls button {
-  min-width: var(--btn-min); min-height: var(--btn-min);
+  min-width: var(--btn-min);
+  min-height: var(--btn-min);
   font-size: var(--btn-font);
   padding: 6px 8px;
   border-radius: 4px;
@@ -71,7 +72,7 @@ body {
   background: var(--button-bg);
   color: #fff;
 }
-#canvas { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+#canvas { position: absolute; top:50%; left:50%; transform: translate(-50%, -50%); }
 #infoPanel {
   position: absolute;
   bottom: var(--ui-pad);
@@ -109,8 +110,9 @@ body {
 #aboutContent h2 { margin-top: 0; font-size: 18px; color: #111; }
 #aboutContent p { margin: 0.5em 0; }
 #aboutClose {
-  position: sticky; top: 0.5rem;
-  float: right;
+  position: absolute;
+  top: var(--ui-pad);
+  right: var(--ui-pad);
   background: var(--button-bg);
   border: 1px solid var(--button-border);
   border-radius: 4px;
@@ -127,7 +129,10 @@ body {
   margin: 0.5em 0;
 }
 .shortcuts-list li {
-  display: flex; align-items: center; gap: 0.5em; font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 13px;
 }
 .shortcuts-list kbd {
   background: var(--kbd-bg);
@@ -156,33 +161,14 @@ body {
   <button id="nextPrime">Next Prime »</button>
   <button id="randNum">Random #</button>
   <button id="randPrime">Random Prime</button>
-
   <label>Zoom <input id="zoomInput" type="number" value="100" step="any">%</label>
   <button id="zoomOut">–</button>
   <button id="zoomIn">+</button>
   <button id="resetZoom">Reset Zoom</button>
-
-  <label>Mode
-    <select id="modeSelect">
-      <option value="recursive">Recursive</option>
-      <option value="trueSize">Relative</option>
-    </select>
-  </label>
-
+  <label>Mode <select id="modeSelect"><option value="recursive">Recursive</option><option value="trueSize">Relative</option></select></label>
   <div id="palette"></div>
   <button id="resetColors">Reset Colors</button>
-
-  <label>Themes
-    <select id="themeSelect">
-      <option value="default">Default</option>
-      <option value="pastel">Pastel</option>
-      <option value="neon">Neon</option>
-      <option value="earth">Earth</option>
-      <option value="alchemy">Alchemy</option>
-      <option value="custom">Custom</option>
-    </select>
-  </label>
-
+  <label>Themes <select id="themeSelect"><option value="default">Default</option><option value="pastel">Pastel</option><option value="neon">Neon</option><option value="earth">Earth</option><option value="alchemy">Alchemy</option><option value="custom">Custom</option></select></label>
   <label>Background <input id="bgColor" type="color" class="color-input" value="#000000"></label>
   <button id="downloadSVG">Download SVG</button>
 </div>
@@ -195,10 +181,10 @@ body {
     <button id="aboutClose">Close</button>
     <h2>About This Generator</h2>
     <p>
-      The Prime Cell Visualizer implements the prime cell framework, wherein any odd prime <code>p</code> is expressed as <code>p = 2n + 1</code>, decomposed into two lobes of <code>n</code> units surrounding a central nucleus of size 1.
+      The Prime Cell Visualizer implements the prime cell framework, wherein any prime greater than 2 <code>p</code> is expressed as <code>p = 2n + 1</code>, decomposed into two lobes of <code>n</code> units surrounding a central nucleus of size <code>1</code>.
     </p>
     <p>
-      Composite numbers render as linear arrays of units, while primes are shown as circular cells surrounded by a gradient membrane. Lobes may recursively embed smaller prime cells, creating structures that mirror <a href="https://en.wikipedia.org/wiki/Cunningham_chain" target="_blank">Cunningham chains</a>.
+      Composite numbers render as linear arrays of units, while primes are shown as circular cells surrounded by a gradient membrane. Lobes may recursively embed smaller prime cells, creating structures that mirror <a href="https://en.wikipedia.org/wiki/Cunningham_chain" target="_blank">Cunningham chains of the first kind</a>.
     </p>
     <p>
       Adjust zoom, toggle between recursive and relative modes, choose default or custom themes, and export diagrams as SVG.
@@ -212,8 +198,8 @@ body {
       <li><kbd>]</kbd> Next prime</li>
       <li><kbd>↑</kbd> Increment</li>
       <li><kbd>↓</kbd> Decrement</li>
-      <li><kbd>-</kbd> Zoom out</li>
-      <li><kbd>=</kbd> Zoom in</li>
+      <li><kbd>&#123;</kbd> Zoom out</li>
+      <li><kbd>&#125;</kbd> Zoom in</li>
       <li><kbd>c</kbd> Toggle controls</li>
       <li><kbd>?</kbd> Toggle about</li>
       <li><kbd>i</kbd> Toggle info</li>
@@ -429,7 +415,7 @@ body {
   R.zoomOutBtn.addEventListener('click',()=>step(-1));
   R.zoomInBtn .addEventListener('click',()=>step(1));
   R.resetZoomBtn.addEventListener('click',()=>{ baseUnitW=null; R.zoomInput.value=100; scheduleDraw(); });
-  R.modeSelect.addEventListener('change',()=>{ baseUnitW=null; R.zoomInput.value=100; scheduleDraw(); });
+  R.modeSelect.addEventListener('change',()=>{ baseUnitW=null; scheduleDraw(); });
   R.bgInput.addEventListener('input',scheduleDraw);
   R.resetCols.addEventListener('click',()=>{ edgeColors=['#ffc0cb','#00ff00','#ffa500','#0000ff','#800080','#ff0000','#ffff00']; buildPalette(); initGradients(); scheduleDraw(); });
   R.dlBtn.addEventListener('click',()=>{ const s=new XMLSerializer().serializeToString(svg), b=new Blob([s],{type:'image/svg+xml'}), u=URL.createObjectURL(b), a=document.createElement('a'); a.href=u; a.download=`prime-${R.numInput.value}.svg`; a.click(); URL.revokeObjectURL(u); });
@@ -445,8 +431,8 @@ body {
     if(e.target.tagName!=='INPUT'){
       if(e.key==='['){ e.preventDefault(); R.prevBtn.click(); }
       if(e.key===']'){ e.preventDefault(); R.nextBtn.click(); }
-      if(e.key==='-'||e.key==='_' ){ e.preventDefault(); R.zoomOutBtn.click(); }
-      if(e.key==='='||e.key==='+'){ e.preventDefault(); R.zoomInBtn.click(); }
+      if(e.key==='{' ){ e.preventDefault(); R.zoomOutBtn.click(); }
+      if(e.key==='}'){ e.preventDefault(); R.zoomInBtn.click(); }
       if(e.key==='ArrowUp'){ e.preventDefault(); R.numInput.value=+R.numInput.value+1; scheduleDraw(); }
       if(e.key==='ArrowDown'){ e.preventDefault(); R.numInput.value=Math.max(1,+R.numInput.value-1); scheduleDraw(); }
       if(e.key.toLowerCase()==='c'){ e.preventDefault(); R.toggleUI.click(); }
