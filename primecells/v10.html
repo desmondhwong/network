@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Prime Cell Visualizer (v9)</title>
+  <title>Prime Cell Visualizer v6 with v8 Enhancements</title>
   <style>
 :root {
   --ui-pad: 12px;
@@ -169,19 +169,8 @@ body {
   <div id="aboutContent">
     <button id="aboutClose">Close</button>
     <h2>About This Generator</h2>
-    <p>
-      The Prime Cell Visualizer implements the prime cell framework: for any prime greater than 2, <code>p</code> is expressed as <code>p = 2n + 1</code>, decomposed into two lobes of <code>n</code> units surrounding a central nucleus of size <code>1</code>.
-    </p>
-    <p>
-      Composite numbers render as linear arrays of units, while primes are shown as circular cells surrounded by a gradient membrane. Lobes may recursively embed smaller prime cells, creating structures that mirror <a href="https://en.wikipedia.org/wiki/Cunningham_chain" target="_blank">Cunningham chains of the first kind</a>.
-    </p>
-    <p>
-      Adjust zoom, toggle between recursive and relative modes, choose default or custom themes, and export diagrams as SVG.
-    </p>
-    <p>
-      Learn more on the <a href="https://www.are.na/gyroscopic/prime-cells" target="_blank">project are.na channel</a>.
-    </p>
-    <hr>
+    <p>The Prime Cell Visualizer implements prime cells: any odd prime <code>p=2n+1</code> splits into two lobes of <code>n</code> and a nucleus of <code>1</code>.</p>
+    <p>Composites render flat; primes nest recursively with gradient membranes.</p>
     <h3>Keyboard Shortcuts</h3>
     <ul class="shortcuts-list">
       <li><kbd>[</kbd> Prev prime</li>
@@ -191,9 +180,6 @@ body {
       <li><kbd>c</kbd> Toggle controls</li>
       <li><kbd>?</kbd> About</li>
     </ul>
-    <hr>
-    <h3>Version History</h3>
-    <p><b>v9 – 250506</b> Fast mode: units for integers above 3000 are rendered as a solid 1px white line</p>
   </div>
 </div>
 <script>

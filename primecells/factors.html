@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Integer Factor Analyzer</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    #tableContainer,
+    #distTableContainer {
+      margin-top: 2rem;
+      max-height: 400px;
+      overflow: auto;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.4rem 0.8rem;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #f7f7f7;
+      position: sticky;
+      top: 0;
+    }
+    /* make distribution table headers clickable */
+    #distTableContainer th {
+      cursor: pointer;
+    }
+    .prime-row {
+      background-color: #fff3cd;
+    }
+    #chartWrapper {
+      position: relative;
+      height: 300px;
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Integer Factor Analyzer</h1>
+  <button id="generateBtn">Generate Next 1 000 Integers</button>
+
+  <h2>Factors per Integer (bar chart)</h2>
+  <div id="chartWrapper">
+    <canvas id="factorChart"></canvas>
+  </div>
+
+  <h2>Distribution of Factor Counts</h2>
+  <div id="distTableContainer"></div>
+
+  <h2>Details Table</h2>
+  <div id="tableContainer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const BATCH_SIZE = 1000;
+      let currentStart = 0;
+
+      // cumulative data
+      const allLabels = [];
+      const allData = [];
+      const allTypes = [];
+      const allFactors = [];
+      let factorChart = null;
+
+      const generateBtn = document.getElementById('generateBtn');
+      const factorCtx    = document.getElementById('factorChart').getContext('2d');
+
+      function getFactors(n) {
+        if (n <= 0) return [];
+        const facs = [];
+        for (let i = 1; i <= Math.sqrt(n); i++) {
+          if (n % i === 0) {
+            facs.push(i);
+            if (i !== n / i) facs.push(n / i);
+          }
+        }
+        return facs.sort((a, b) => a - b);
+      }
+
+      function classify(n, facs) {
+        if (facs.length === 2) return 'prime';
+        if (facs.length > 2) return 'composite';
+        return 'neither';
+      }
+
+      function updateFactorChart() {
+        const colors = allTypes.map(t => t === 'prime' ? 'orange' : 'steelblue');
+        if (!factorChart) {
+          factorChart = new Chart(factorCtx, {
+            type: 'bar',
+            data: {
+              labels: allLabels,
+              datasets: [{
+                label: 'Number of Factors',
+                data: allData,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: { title: { display: true, text: 'Integer' } },
+                y: { title: { display: true, text: 'Number of Factors' }, beginAtZero: true }
+              }
+            }
+          });
+        } else {
+          factorChart.data.labels = allLabels;
+          factorChart.data.datasets[0].data = allData;
+          factorChart.data.datasets[0].backgroundColor = colors;
+          factorChart.data.datasets[0].borderColor = colors;
+          factorChart.update();
+        }
+      }
+
+      function updateDistributionTable() {
+        // build frequency map
+        const freq = {};
+        allData.forEach(cnt => { freq[cnt] = (freq[cnt] || 0) + 1; });
+        const factorCounts = Object.keys(freq)
+          .map(k => parseInt(k))
+          .filter(k => k >= 2)
+          .sort((a, b) => a - b);
+        const total = allData.length;
+
+        const rows = factorCounts.map(cnt => {
+          const count = freq[cnt];
+          const pct = ((count / total) * 100).toFixed(1) + '%';
+          return `<tr>
+                    <td>${cnt}</td>
+                    <td>${count}</td>
+                    <td>${pct}</td>
+                  </tr>`;
+        }).join('');
+
+        const container = document.getElementById('distTableContainer');
+        container.innerHTML = `
+          <table id="distTable">
+            <thead>
+              <tr>
+                <th data-type="number"># of Factors</th>
+                <th data-type="number">Count</th>
+                <th data-type="percent">Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        `;
+        makeDistTableSortable();
+      }
+
+      function makeDistTableSortable() {
+        const table = document.getElementById('distTable');
+        const headers = table.querySelectorAll('th');
+        headers.forEach((header, i) => {
+          let asc = true;
+          header.onclick = () => {
+            const type = header.getAttribute('data-type');
+            const tbody = table.tBodies[0];
+            const rows = Array.from(tbody.rows);
+            rows.sort((a, b) => {
+              let aText = a.cells[i].innerText;
+              let bText = b.cells[i].innerText;
+              let aVal, bVal;
+              if (type === 'percent') {
+                aVal = parseFloat(aText);
+                bVal = parseFloat(bText);
+              } else {
+                aVal = parseFloat(aText);
+                bVal = parseFloat(bText);
+              }
+              return asc ? aVal - bVal : bVal - aVal;
+            });
+            rows.forEach(r => tbody.appendChild(r));
+            asc = !asc;
+          };
+        });
+      }
+
+      function updateDetailsTable() {
+        const rows = allLabels.map((n, i) => `
+          <tr class="${allTypes[i] === 'prime' ? 'prime-row' : ''}">
+            <td>${n}</td>
+            <td>${allTypes[i]}</td>
+            <td>${allData[i]}</td>
+            <td>${allFactors[i] || '—'}</td>
+          </tr>
+        `).join('');
+
+        document.getElementById('tableContainer').innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Integer</th>
+                <th>Type</th>
+                <th># of Factors</th>
+                <th>Factors</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        `;
+      }
+
+      function generateData() {
+        for (let n = currentStart; n < currentStart + BATCH_SIZE; n++) {
+          const facs = getFactors(n);
+          allLabels.push(n);
+          allData.push(facs.length);
+          allTypes.push(classify(n, facs));
+          allFactors.push(facs.join(', '));
+        }
+        currentStart += BATCH_SIZE;
+        updateFactorChart();
+        updateDistributionTable();
+        updateDetailsTable();
+      }
+
+      generateBtn.addEventListener('click', () => {
+        try {
+          generateData();
+        } catch (err) {
+          console.error(err);
+          alert('Error generating data—see console for details.');
+        }
+      });
+
+      // initial load
+      generateData();
+    });
+  </script>
+</body>
+</html>
