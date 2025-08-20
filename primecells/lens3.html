@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Orbital Lens Visualizer — recursive / relative</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --panel-bg:#f6f6f6;
+      --panel-border:#dadada;
+      --text:#111;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      color:var(--text);
+      display:grid;
+      grid-template-rows:auto 1fr auto; /* header | main | footer */
+      background:#ffffff; /* live-updated */
+    }
+    header,footer{
+      background:var(--panel-bg);
+      border-bottom:1px solid var(--panel-border);
+      padding:8px clamp(10px,2.5vw,20px);
+    }
+    footer{
+      border-top:1px solid var(--panel-border);
+      border-bottom:none;
+      display:flex;align-items:center;justify-content:space-between;
+      min-height:42px;
+    }
+    header .row{
+      display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:4px 0;
+    }
+    label{font-size:12px;color:#333;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+    input[type="number"]{width:7ch}
+    input[type="color"]{width:32px;height:24px;padding:0;border:1px solid #bbb;border-radius:4px;background:#fff}
+    select,button,input{font:inherit}
+    button{padding:6px 10px;border:1px solid #bbb;border-radius:6px;background:#fff;cursor:pointer}
+    button:active{transform:translateY(1px)}
+    .kbd{background:#eee;border:1px solid #ddd;padding:1px 6px;border-radius:4px}
+    .muted{color:#666}
+    .flag{font-size:12px;padding:2px 6px;border-radius:4px;border:1px solid #ccc;background:#fff}
+    main{
+      padding:clamp(6px,1.5vw,16px);
+      min-height:0; /* allow child to shrink so footer always visible */
+      display:grid;place-items:center;
+    }
+    .stage{
+      height:100%; /* fill main so the page never scrolls */
+      width:100%;
+      display:grid;place-items:center;
+    }
+    /* Make the drawing square and always in view; viewBox zoom handles scaling */
+    svg{
+      height:100%;
+      width:auto;
+      max-width:100%;
+      display:block;
+      overflow:visible;
+      background:transparent;
+    }
+    .zoom-readout{font-size:12px;color:#333;padding:0 4px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row">
+      <strong>Orbital Lens</strong>
+      <span class="muted">— two sizing modes (recursive / relative)</span>
+      <span id="belowFlag" class="flag" style="display:none">below-5 sequence</span>
+    </div>
+    <div class="row">
+      <label>Prime p
+        <input id="pInput" type="number" value="47" step="2" min="3">
+      </label>
+      <button id="prevPrime" title="Previous (← / [)">◀ Prev</button>
+      <button id="nextPrime" title="Next (→ / ])">Next ▶</button>
+      <button id="go47" title="Jump to 47">Go 47</button>
+      <button id="resetP" title="Reset to 5">Reset to 5</button>
+
+      <label>Mode
+        <select id="mode">
+          <option value="recursive" selected>recursive</option>
+          <option value="relative">relative</option>
+        </select>
+      </label>
+
+      <label>Zoom
+        <button id="zoomOut" title="Zoom out (−)">−</button>
+        <button id="zoomIn" title="Zoom in (+)">+</button>
+        <button id="zoomReset" title="Reset (0)">Reset</button>
+        <span class="zoom-readout" id="zoomPct">100%</span>
+      </label>
+
+      <label>Background <input id="bgColor" type="color" value="#FFFFFF"></label>
+      <label>Shell <input id="shellColor" type="color" value="#000000"></label>
+      <label>Membrane A <input id="memAColor" type="color" value="#FFFFFF"></label>
+      <label>Membrane B <input id="memBColor" type="color" value="#FFFFFF"></label>
+      <label><input id="cutThrough" type="checkbox"> Cut-through</label>
+      <label><input id="showMarkers" type="checkbox" checked> Show unit markers</label>
+
+      <button id="downloadSvg" title="Download current SVG">Download SVG</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stage">
+      <svg id="svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Orbital Lens">
+        <defs id="defs"></defs>
+        <g id="root"></g>
+      </svg>
+    </div>
+  </main>
+
+  <footer>
+    <div class="muted">
+      Keys: <span class="kbd">[</span>/<span class="kbd">]</span> or <span class="kbd">←</span>/<span class="kbd">→</span> for primes; <span class="kbd">-</span>/<span class="kbd">=</span> zoom, <span class="kbd">0</span> reset.
+    </div>
+    <div id="info" class="muted"></div>
+  </footer>
+
+  <script>
+    // ---------- Prime helpers ----------
+    function isPrime(n){
+      if(n<2||n%1) return false;
+      if(n%2===0) return n===2;
+      for(let i=3;i*i<=n;i+=2){ if(n%i===0) return false; }
+      return true;
+    }
+    function nextPrime(n){
+      let k=Math.max(2,Math.floor(n)+1);
+      if(k%2===0) k++;
+      while(!isPrime(k)) k+=2;
+      return k;
+    }
+    function prevPrime(n){
+      let k=Math.max(2,Math.floor(n)-1);
+      if(k%2===0) k--;
+      while(k>=2 && !isPrime(k)) k-=2;
+      return k<2?2:k;
+    }
+    // "below-5" chain: primes p ≡ 2 (mod 3): 11, 17, 23, …
+    function nextP_mod3eq2(n){ let k=Math.max(11,n+1); while(!isPrime(k)||k%3!==2) k++; return k; }
+    function prevP_mod3eq2(n){ let k=Math.max(11,n-1); while(k>=11 && (!isPrime(k)||k%3!==2)) k--; return k<11?11:k; }
+
+    // ---------- DOM ----------
+    const SVG  = document.getElementById('svg');
+    const DEFS = document.getElementById('defs');
+    const ROOT = document.getElementById('root');
+    const UI = {
+      p: document.getElementById('pInput'),
+      prev: document.getElementById('prevPrime'),
+      next: document.getElementById('nextPrime'),
+      go47: document.getElementById('go47'),
+      resetP: document.getElementById('resetP'),
+      mode: document.getElementById('mode'),
+      zoomIn: document.getElementById('zoomIn'),
+      zoomOut: document.getElementById('zoomOut'),
+      zoomReset: document.getElementById('zoomReset'),
+      zoomPct: document.getElementById('zoomPct'),
+      bg: document.getElementById('bgColor'),
+      shell: document.getElementById('shellColor'),
+      memA: document.getElementById('memAColor'),
+      memB: document.getElementById('memBColor'),
+      cut: document.getElementById('cutThrough'),
+      markers: document.getElementById('showMarkers'),
+      dl: document.getElementById('downloadSvg'),
+      belowFlag: document.getElementById('belowFlag'),
+      info: document.getElementById('info'),
+    };
+
+    // ---------- State ----------
+    let p = 47;
+    let below5 = false;          // navigating the 11,17,23,… chain
+    let zoom = 1;                // viewBox-based; 1 == 100%
+    const cx=500, cy=500;
+    const R0_BASE = 480;         // recursive mode shell radius
+    const U_CONST = (2*R0_BASE)/5; // relative mode unit size (nucleus constant)
+
+    // ---------- Zoom (viewBox-centered) ----------
+    function applyZoom(){
+      // Zoom around the viewBox center (500,500)
+      const w = 1000 / zoom;
+      const h = 1000 / zoom;
+      const x = cx - w/2;
+      const y = cy - h/2;
+      SVG.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
+      UI.zoomPct.textContent = `${Math.round(zoom*100)}%`;
+    }
+    function zoomBy(f){ zoom*=f; if(zoom<0.2) zoom=0.2; if(zoom>12) zoom=12; applyZoom(); }
+    function zoomReset(){ zoom=1; applyZoom(); }
+    UI.zoomIn.onclick = ()=>zoomBy(1.1);
+    UI.zoomOut.onclick = ()=>zoomBy(1/1.1);
+    UI.zoomReset.onclick = zoomReset;
+    window.addEventListener('keydown', (e)=>{
+      if(e.key==='='||e.key==='+') zoomBy(1.1);
+      if(e.key==='-') zoomBy(1/1.1);
+      if(e.key==='0') zoomReset();
+    });
+
+    // ---------- Geometry ----------
+    function circle(x,y,r,fill){ const c=document.createElementNS(SVG.namespaceURI,'circle'); c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',r); if(fill) c.setAttribute('fill',fill); return c; }
+    function rect(x,y,w,h,fill){ const r=document.createElementNS(SVG.namespaceURI,'rect'); r.setAttribute('x',x); r.setAttribute('y',y); r.setAttribute('width',w); r.setAttribute('height',h); if(fill) r.setAttribute('fill',fill); return r; }
+    function unitY(i, R0, u){ return cy - R0 + (i+0.5)*u; }
+
+    // Black/white unit membership
+    function isBlackUnit(i, prime, isBelow){
+      if(!isBelow){
+        // 1 + m + 1 + m + 1
+        const m = (prime-3)/2;
+        // blocks: [0] (1), [1..m] (membrane), [m+1] (1), [m+2 .. m+1+m] (membrane), [last] (1)
+        return (i===0) || (i===m+1) || (i===prime-1);
+      } else {
+        // k + 1 + k + 1 + k
+        const k = (prime-2)/3;
+        // top block
+        if(i <  k) return true;
+        if(i === k) return false;          // top membrane
+        if(i <  2*k+1) return true;        // central block (k entries at i=k+1..2k)
+        if(i === 2*k+1) return false;      // bottom membrane
+        return i <  3*k+2;                 // bottom block (k entries)
+      }
+    }
+
+    function membraneGeometry(prime, isBelow, mode){
+      let R0, u;
+      if(mode==='recursive'){              // shell fixed; units shrink
+        R0 = R0_BASE;
+        u  = (2*R0)/prime;
+      } else {                             // relative; unit fixed, shell grows
+        u  = U_CONST;
+        R0 = (prime*u)/2;
+      }
+
+      let rm, yTop, yBot;
+      if(!isBelow){
+        const m = (prime-3)/2;
+        rm = (m*u)/2;
+        yTop = cy - R0 + u + rm;
+        yBot = cy + R0 - u - rm;
+      } else {
+        const k = (prime-2)/3;
+        rm = u/2;
+        yTop = cy - R0 + k*u + rm;
+        yBot = cy + R0 - k*u - rm;
+      }
+      return {R0,u,rm,yTop,yBot};
+    }
+
+    // ---------- Draw ----------
+    function draw(){
+      document.body.style.background = UI.bg.value;
+
+      // wipe
+      while(ROOT.firstChild) ROOT.removeChild(ROOT.firstChild);
+
+      const mode = UI.mode.value;
+      const {R0,u,rm,yTop,yBot} = membraneGeometry(p, below5, mode);
+
+      // build (optional) mask for cut-through
+      let maskId = null;
+      if(UI.cut.checked){
+        maskId = 'mask-orbital';
+        const old = document.getElementById(maskId);
+        if(old) old.remove();
+        const mEl = document.createElementNS(SVG.namespaceURI,'mask'); mEl.id=maskId;
+        mEl.appendChild(rect(0,0,1000,1000,'white'));
+        mEl.appendChild(circle(cx,yTop,rm,'black'));
+        mEl.appendChild(circle(cx,yBot,rm,'black'));
+        DEFS.appendChild(mEl);
+      }
+
+      // Shell
+      const shell = circle(cx,cy,R0,UI.shell.value);
+      if(maskId) shell.setAttribute('mask',`url(#${maskId})`);
+      ROOT.appendChild(shell);
+
+      // Membranes (only if not cut-through)
+      if(!maskId){
+        ROOT.appendChild(circle(cx,yTop,rm,UI.memA.value));
+        ROOT.appendChild(circle(cx,yBot,rm,UI.memB.value));
+      }
+
+      // Unit markers (ALL black units — including k-blocks in below-5)
+      if(UI.markers.checked){
+        const ru = u/2;
+        for(let i=0;i<p;i++){
+          if(isBlackUnit(i,p,below5)){
+            ROOT.appendChild(circle(cx, unitY(i,R0,u), ru, '#000'));
+          }
+        }
+      }
+
+      // UI info
+      const m_above = (p-3)/2;
+      const k_below = (p-2)/3;
+      const dec = below5 ? `${k_below}+1+${k_below}+1+${k_below}` : `1+${m_above}+1+${m_above}+1`;
+      UI.info.textContent = `mode=${mode} | p=${p} | ${below5?'below-5':'above-5'} | decomposition: ${dec} | unit=${u.toFixed(2)} | zoom ${Math.round(zoom*100)}%`;
+      UI.belowFlag.style.display = below5 ? 'inline-block' : 'none';
+    }
+
+    // ---------- Navigation & coercion ----------
+    function coerceInputToState(raw){
+      let val = Number(raw);
+      if(!Number.isFinite(val)) val = 5;
+      if(val < 5){
+        below5 = true;  val = 11;
+      } else {
+        below5 = false;
+        if(!isPrime(val)) val = nextPrime(val-1);
+        if(val < 5) val = 5;
+      }
+      return val;
+    }
+
+    function stepPrev(){
+      if(!below5){
+        if(p>5){
+          p = prevPrime(p);
+          if(p<5) p = 5;
+        } else { below5 = true; p = 11; }
+      } else {
+        p = nextP_mod3eq2(p); // further below: membranes smaller
+      }
+      UI.p.value = p; draw();
+    }
+
+    function stepNext(){
+      if(!below5){
+        p = nextPrime(p);
+      } else {
+        if(p===11){ below5=false; p=5; }
+        else { p = prevP_mod3eq2(p); }
+      }
+      UI.p.value = p; draw();
+    }
+
+    // ---------- Events ----------
+    UI.prev.onclick = stepPrev;
+    UI.next.onclick = stepNext;
+    UI.go47.onclick = ()=>{ below5=false; p=47; UI.p.value=47; draw(); };
+    UI.resetP.onclick = ()=>{ below5=false; p=5; UI.p.value=5; draw(); };
+
+    UI.p.addEventListener('change', ()=>{
+      const coerced = coerceInputToState(UI.p.value);
+      p = coerced; UI.p.value = coerced; draw();
+    });
+
+    [UI.mode, UI.bg, UI.shell, UI.memA, UI.memB, UI.cut, UI.markers]
+      .forEach(el=>el.addEventListener('input', draw));
+
+    window.addEventListener('keydown', (e)=>{
+      if(e.key===']' || e.key==='ArrowRight'){ e.preventDefault(); stepNext(); }
+      if(e.key==='[' || e.key==='ArrowLeft'){ e.preventDefault(); stepPrev(); }
+    });
+
+    // Download (embed background for cut-through export)
+    UI.dl.addEventListener('click', ()=>{
+      const clone = SVG.cloneNode(true);
+      clone.insertBefore(rect(0,0,1000,1000,getComputedStyle(document.body).backgroundColor), clone.firstChild);
+      const s = new XMLSerializer().serializeToString(clone);
+      const blob = new Blob([s], {type:'image/svg+xml;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href=url; a.download=`orbital-lens-p${p}${below5?'-below':''}-${UI.mode.value}.svg`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // ---------- Init ----------
+    function init(){
+      p = 47; below5=false; UI.p.value=p;
+      zoomReset();    // centers and sets 100%
+      draw();
+    }
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Orbital Lens Visualizer — Primes</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --gap: 12px;
+      --panel-bg: #f6f6f6;
+      --panel-fg: #111;
+      --accent: #444;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: #ffffff; /* live-updated */
+      color: var(--panel-fg);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: var(--gap);
+    }
+    header, footer {
+      padding: 10px clamp(10px, 3vw, 28px);
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 18px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid #ddd;
+    }
+    header .group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    header label {
+      font-size: 12px;
+      color: #333;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    input[type="number"] { width: 7ch; }
+    input[type="color"] {
+      width: 32px; height: 24px; padding: 0; border: 1px solid #bbb; border-radius: 4px; background: #fff;
+    }
+    button, select, input, label {
+      font: inherit;
+    }
+    button {
+      padding: 6px 10px;
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+    }
+    button:active { transform: translateY(1px); }
+    button.primary {
+      border-color: #999; background: #fff;
+    }
+    main {
+      display: grid;
+      place-items: center;
+      padding: clamp(8px, 3vw, 24px);
+    }
+    svg {
+      width: min(92vmin, 1100px);
+      height: auto;
+      display: block;
+      overflow: visible;
+      background: transparent;
+    }
+    .hint {
+      color: #666; font-size: 12px;
+    }
+    footer { display: flex; align-items: center; justify-content: space-between; }
+    code.kbd { background:#eee; padding:2px 6px; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="group">
+      <strong>Orbital Lens</strong>
+      <span class="hint">odd primes only</span>
+    </div>
+
+    <div class="group">
+      <label>p
+        <input id="pInput" type="number" value="47" step="2" min="5">
+      </label>
+      <button id="prevPrime" title="Previous prime (← / [)">◀ Prev prime</button>
+      <button id="nextPrime" title="Next prime (→ / ])">Next prime ▶</button>
+      <button id="go47" title="Jump to 47">Go 47</button>
+    </div>
+
+    <div class="group">
+      <label>Background <input id="bgColor" type="color" value="#FFFFFF"></label>
+      <label>Shell <input id="shellColor" type="color" value="#000000"></label>
+      <label>Membrane A <input id="memAColor" type="color" value="#FFFFFF"></label>
+      <label>Membrane B <input id="memBColor" type="color" value="#FFFFFF"></label>
+      <label><input id="cutThrough" type="checkbox"> Cut-through</label>
+      <label><input id="showMarkers" type="checkbox"> Show unit markers</label>
+    </div>
+
+    <div class="group">
+      <button id="downloadSvg" title="Download current SVG">Download SVG</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Canvas -->
+    <svg id="canvas" viewBox="0 0 1000 1000" role="img" aria-label="Orbital Lens">
+      <defs id="defs"></defs>
+    </svg>
+  </main>
+
+  <footer>
+    <div class="hint">
+      Keys: <code class="kbd">[</code>/<code class="kbd">]</code> or <code class="kbd">←</code>/<code class="kbd">→</code> for previous/next prime.
+    </div>
+    <div class="hint" id="info"></div>
+  </footer>
+
+  <script>
+    // ---------- Utility: primes ----------
+    function isPrime(n) {
+      if (n < 2 || n % 1) return false;
+      if (n % 2 === 0) return n === 2;
+      for (let i = 3; i * i <= n; i += 2) {
+        if (n % i === 0) return false;
+      }
+      return true;
+    }
+    function nextPrime(n) {
+      let k = Math.max(3, Math.floor(n) + 1);
+      if (k % 2 === 0) k++;
+      while (!isPrime(k)) k += 2;
+      return k;
+    }
+    function prevPrime(n) {
+      let k = Math.max(3, Math.floor(n) - 1);
+      if (k % 2 === 0) k--;
+      while (k >= 3 && !isPrime(k)) k -= 2;
+      return k < 3 ? 3 : k;
+    }
+
+    // ---------- DOM refs ----------
+    const R = {
+      svg: document.getElementById('canvas'),
+      defs: document.getElementById('defs'),
+      pInput: document.getElementById('pInput'),
+      prevPrime: document.getElementById('prevPrime'),
+      nextPrime: document.getElementById('nextPrime'),
+      go47: document.getElementById('go47'),
+      bgColor: document.getElementById('bgColor'),
+      shellColor: document.getElementById('shellColor'),
+      memAColor: document.getElementById('memAColor'),
+      memBColor: document.getElementById('memBColor'),
+      cutThrough: document.getElementById('cutThrough'),
+      showMarkers: document.getElementById('showMarkers'),
+      info: document.getElementById('info'),
+      downloadSvg: document.getElementById('downloadSvg'),
+    };
+
+    // ---------- Layout ----------
+    function resizeViewBox() {
+      // Keep a square coordinate system
+      const box = 1000; // virtual units
+      R.svg.setAttribute('viewBox', `0 0 ${box} ${box}`);
+    }
+
+    // ---------- Render: Orbital Lens ----------
+    function drawOrbital(p) {
+      // ensure odd prime >= 5
+      if (p < 5) p = 5;
+      if (!isPrime(p) || p % 2 === 0) p = (p <= 5) ? 5 : nextPrime(p - 1);
+      R.pInput.value = p;
+
+      // page background
+      document.body.style.background = R.bgColor.value;
+
+      // wipe everything except <defs>
+      while (R.svg.lastChild && R.svg.lastChild.nodeName !== 'defs') {
+        R.svg.removeChild(R.svg.lastChild);
+      }
+
+      const size = 1000;
+      const cx = 500, cy = 500, R0 = 480; // leave a small margin
+      const u  = (2 * R0) / p;           // unit height
+      const m  = (p - 3) / 2;            // membrane units
+      const rm = (m * u) / 2;            // membrane radius
+
+      const yTop = cy - R0 + u + rm;     // center of top membrane
+      const yBot = cy + R0 - u - rm;     // center of bottom membrane
+      const ru   = u / 2;                // radius of "unit" markers
+
+      // Build mask if cut-through
+      let maskId = null;
+      if (R.cutThrough.checked) {
+        maskId = 'mask-orbital';
+        // remove any prior mask with same id
+        const old = document.getElementById(maskId);
+        if (old) old.remove();
+
+        const mEl = document.createElementNS('http://www.w3.org/2000/svg', 'mask');
+        mEl.setAttribute('id', maskId);
+
+        const rect = document.createElementNS(R.svg.namespaceURI, 'rect');
+        rect.setAttribute('x', 0); rect.setAttribute('y', 0);
+        rect.setAttribute('width', size); rect.setAttribute('height', size);
+        rect.setAttribute('fill', 'white');
+        mEl.appendChild(rect);
+
+        const holeA = document.createElementNS(R.svg.namespaceURI, 'circle');
+        holeA.setAttribute('cx', cx); holeA.setAttribute('cy', yTop);
+        holeA.setAttribute('r', rm); holeA.setAttribute('fill', 'black');
+        mEl.appendChild(holeA);
+
+        const holeB = document.createElementNS(R.svg.namespaceURI, 'circle');
+        holeB.setAttribute('cx', cx); holeB.setAttribute('cy', yBot);
+        holeB.setAttribute('r', rm); holeB.setAttribute('fill', 'black');
+        mEl.appendChild(holeB);
+
+        R.defs.appendChild(mEl);
+      }
+
+      // Outer shell
+      const shell = document.createElementNS(R.svg.namespaceURI, 'circle');
+      shell.setAttribute('cx', cx);
+      shell.setAttribute('cy', cy);
+      shell.setAttribute('r', R0);
+      shell.setAttribute('fill', R.shellColor.value);
+      if (maskId) shell.setAttribute('mask', `url(#${maskId})`);
+      R.svg.appendChild(shell);
+
+      // Membranes (only when not cut-through)
+      if (!maskId) {
+        const memA = document.createElementNS(R.svg.namespaceURI, 'circle');
+        memA.setAttribute('cx', cx); memA.setAttribute('cy', yTop);
+        memA.setAttribute('r', rm); memA.setAttribute('fill', R.memAColor.value);
+        R.svg.appendChild(memA);
+
+        const memB = document.createElementNS(R.svg.namespaceURI, 'circle');
+        memB.setAttribute('cx', cx); memB.setAttribute('cy', yBot);
+        memB.setAttribute('r', rm); memB.setAttribute('fill', R.memBColor.value);
+        R.svg.appendChild(memB);
+      }
+
+      // Optional markers: top edge, nucleus, bottom edge (1-unit each)
+      if (R.showMarkers.checked) {
+        const mk = (y, fill = '#000') => {
+          const c = document.createElementNS(R.svg.namespaceURI, 'circle');
+          c.setAttribute('cx', cx); c.setAttribute('cy', y);
+          c.setAttribute('r', ru);  c.setAttribute('fill', fill);
+          R.svg.appendChild(c);
+        };
+        mk(cy - R0 + ru, '#000'); // top edge
+        mk(cy, '#000');           // nucleus
+        mk(cy + R0 - ru, '#000'); // bottom edge
+      }
+
+      // Info line
+      R.info.textContent = `p = ${p}  |  decomposition: 1 + ${m} + 1 + ${m} + 1  |  membrane radius = ${(rm).toFixed(2)} (in viewBox units)`;
+    }
+
+    // ---------- Controls wiring ----------
+    function stepToNextPrime() {
+      const p = Number(R.pInput.value || 5);
+      const q = nextPrime(p);
+      R.pInput.value = q;
+      drawOrbital(q);
+    }
+    function stepToPrevPrime() {
+      const p = Number(R.pInput.value || 5);
+      const q = prevPrime(p);
+      // ensure >=5
+      const r = q < 5 ? 5 : q;
+      // force odd prime
+      const prime = (r < 5) ? 5 : (isPrime(r) ? r : prevPrime(r));
+      R.pInput.value = prime;
+      drawOrbital(prime);
+    }
+
+    // Number input: coerce to odd prime >= 5
+    R.pInput.addEventListener('change', () => {
+      let p = Number(R.pInput.value);
+      if (p < 5) p = 5;
+      if (!isPrime(p) || p % 2 === 0) {
+        // choose nearest prime (prefer upwards)
+        const up = nextPrime(p);
+        const down = prevPrime(p);
+        p = (p - down <= up - p && down >= 5) ? down : up;
+      }
+      if (p % 2 === 0) p += 1; // odd guard
+      R.pInput.value = p;
+      drawOrbital(p);
+    });
+
+    R.prevPrime.addEventListener('click', stepToPrevPrime);
+    R.nextPrime.addEventListener('click', stepToNextPrime);
+    R.go47.addEventListener('click', () => { R.pInput.value = 47; drawOrbital(47); });
+
+    // Colors / toggles
+    [R.bgColor, R.shellColor, R.memAColor, R.memBColor, R.cutThrough, R.showMarkers]
+      .forEach(el => el.addEventListener('input', () => drawOrbital(Number(R.pInput.value || 47))));
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === ']' || e.key === 'ArrowRight') { e.preventDefault(); stepToNextPrime(); }
+      if (e.key === '[' || e.key === 'ArrowLeft')  { e.preventDefault(); stepToPrevPrime(); }
+    });
+
+    // Download SVG
+    R.downloadSvg.addEventListener('click', () => {
+      const clone = R.svg.cloneNode(true);
+      // inline the current background as a rect behind everything when cut-through is on
+      const bg = getComputedStyle(document.body).backgroundColor;
+      const bgRect = document.createElementNS(R.svg.namespaceURI, 'rect');
+      bgRect.setAttribute('x', 0); bgRect.setAttribute('y', 0);
+      bgRect.setAttribute('width', 1000); bgRect.setAttribute('height', 1000);
+      bgRect.setAttribute('fill', bg);
+      clone.insertBefore(bgRect, clone.firstChild);
+
+      const serializer = new XMLSerializer();
+      const source = serializer.serializeToString(clone);
+      const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const p = Number(R.pInput.value);
+      a.download = `orbital-lens-p${p}.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Init
+    window.addEventListener('resize', resizeViewBox);
+    resizeViewBox();
+    drawOrbital(47);
+  </script>
+</body>
+</html>
