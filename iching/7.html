@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>I Ching · Yarrow Stalks (Clean Build)</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --fg:#e6ecf2; --muted:#8a93a1; --accent:#7cc4ff;
+      --line:#e6ecf2; --broken-gap:12px; --stick:#f5f7fa;
+      --pile-gap:8px; --card:#121722; --card-edge:#1b2230; --good:#65d68a; --warn:#ffb86b; --bad:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif; color:var(--fg); background:linear-gradient(180deg,#0b0f14 0%, #0d1219 100%);}
+    header{padding:18px 20px; border-bottom:1px solid #121826; background:#0d1219; position:sticky; top:0; z-index:10}
+    h1{margin:0; font-size:18px; letter-spacing:.2px}
+    main{padding:20px; max-width:1100px; margin:0 auto}
+    .grid{display:grid; gap:14px}
+    .row{display:grid; gap:14px; grid-template-columns:1fr 1fr}
+    .three{grid-template-columns:1fr 1fr 1fr}
+    .card{background:var(--card); border:1px solid var(--card-edge); border-radius:14px; padding:14px}
+    .pile{background:var(--card); border:1px dashed #263044; border-radius:12px; padding:12px}
+    .label{color:var(--muted); font-size:12px; letter-spacing:.3px; text-transform:uppercase}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .controls button{appearance:none; border:1px solid #2b3650; background:#121a28; color:var(--fg); padding:9px 12px; border-radius:10px; cursor:pointer; font-size:14px}
+    .controls button[disabled]{opacity:.45; cursor:not-allowed}
+    .controls .primary{border-color:#2c5275; background:#0f2030}
+    .flex{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .small{color:var(--muted); font-size:13px}
+    .hexwrap{display:grid; gap:18px; grid-template-columns:1fr 1fr}
+    .hex{display:flex; flex-direction:column-reverse; gap:8px; align-items:center; min-height:160px; padding:10px; border-radius:10px; background:#0e141e; border:1px dashed #253049}
+    .hex .line{width:100%; height:10px; background:var(--line); border-radius:5px; position:relative}
+    .hex .line.broken{background:linear-gradient(90deg, var(--line) 0 46%, transparent 46% 54%, var(--line) 54% 100%)}
+    .hex .line.moving{outline:2px dashed var(--accent); outline-offset:2px}
+    .legend{display:flex; gap:12px; flex-wrap:wrap}
+    .legend .dot{width:14px; height:14px; border-radius:50%; display:inline-block; vertical-align:middle}
+    .dot.good{background:var(--good)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+    .stalks{display:flex; flex-wrap:wrap; gap:2px; min-height:22px}
+    .stick{width:4px; height:22px; background:var(--stick); border-radius:2px}
+    .stick.man{background:#ffd36b}
+    .stick.taiji{background:#a0b8ff}
+    .stick.rem{background:#86e1b3}
+    .stick.tmp{background:#c8d2e1}
+    .section-title{margin:0 0 6px 0; font-weight:600}
+    .subgrid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
+    .subpile h5{margin:0 0 6px 0; font:600 12px/1.1 system-ui; color:var(--muted); letter-spacing:.3px; text-transform:uppercase}
+    .log{max-height:200px; overflow:auto; font-size:13px; background:#0b1019; border:1px solid #1b2436; padding:10px; border-radius:10px}
+    .badge{display:inline-block; background:#152033; border:1px solid #24324d; color:#b3c7e6; border-radius:999px; padding:2px 8px; font-size:12px}
+    .pill{border-radius:999px; padding:4px 8px; background:#101828; border:1px solid #24324d}
+    footer{padding:20px; color:var(--muted); font-size:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>I Ching · Yarrow Stalks — clean modular build</h1>
+  </header>
+  <main class="grid">
+    <!-- Rite controls -->
+    <section class="card">
+      <div class="flex controls">
+        <button id="btnNew" class="primary">Start New Hexagram</button>
+        <button id="btnTaiji">Set Aside 1 → Taiji</button>
+        <button id="btnSplit">Split</button>
+        <button id="btnTake">Take 1 from Right → Hand (Man/Qi)</button>
+        <button id="btnCastLeft">Cast Left ×4 → Working</button>
+        <button id="btnLeftRem">Left remainder → Hand</button>
+        <button id="btnCastRight">Cast Right ×4 → Working</button>
+        <button id="btnRightRem">Right remainder → Hand</button>
+        <button id="btnCommit">Commit Hand → Remainder (close pass)</button>
+        <button id="btnGather">Gather to Working (keep Taiji)</button>
+        <span class="pill mono" id="status"></span>
+      </div>
+      <div class="small" style="margin-top:8px">
+        <span class="badge" id="passBadge">Pass: —</span>
+        <span class="badge" id="lineBadge">Lines built: 0/6</span>
+      </div>
+    </section>
+
+    <!-- Visual piles -->
+    <section class="row">
+      <div class="pile">
+        <div class="label">Working pile</div>
+        <div id="working" class="stalks"></div>
+      </div>
+      <div class="pile">
+        <div class="label">Heaven / Taiji</div>
+        <div id="heaven" class="stalks"></div>
+      </div>
+      <div class="pile">
+        <div class="label">Left / Heaven / Yang</div>
+        <div id="left" class="stalks"></div>
+      </div>
+      <div class="pile">
+        <div class="label">Right / Earth / Yin</div>
+        <div id="right" class="stalks"></div>
+      </div>
+      <div class="pile">
+        <h4 class="section-title">Hand</h4>
+        <div class="subgrid">
+          <div class="subpile">
+            <h5>Man/Qi</h5>
+            <div id="handMan" class="stalks"></div>
+          </div>
+          <div class="subpile">
+            <h5>Left remainder</h5>
+            <div id="handL" class="stalks"></div>
+          </div>
+          <div class="subpile">
+            <h5>Right remainder</h5>
+            <div id="handR" class="stalks"></div>
+          </div>
+        </div>
+      </div>
+      <div class="pile">
+        <h4 class="section-title">Remainder (by pass)</h4>
+        <div class="subgrid">
+          <div class="subpile">
+            <h5 id="rem1Label">Pass 1: —</h5>
+            <div id="rem1" class="stalks"></div>
+          </div>
+          <div class="subpile">
+            <h5 id="rem2Label">Pass 2: —</h5>
+            <div id="rem2" class="stalks"></div>
+          </div>
+          <div class="subpile">
+            <h5 id="rem3Label">Pass 3: —</h5>
+            <div id="rem3" class="stalks"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hexagram builder and info -->
+    <section class="card">
+      <div class="hexwrap">
+        <div>
+          <div class="label">Primary</div>
+          <div id="hexPrimary" class="hex"></div>
+        </div>
+        <div>
+          <div class="label">Relating</div>
+          <div id="hexRelating" class="hex"></div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px; grid-template-columns: 1fr 1fr;">
+        <div class="pile">
+          <h4>Primary</h4>
+          <div class="mono" id="pNum">Hexagram #: —</div>
+          <div class="mono" id="pLower">Lower: —</div>
+          <div class="mono" id="pUpper">Upper: —</div>
+          <div class="mono" id="pLines">Lines: —</div>
+        </div>
+        <div class="pile">
+          <h4>Relating</h4>
+          <div class="mono" id="rNum">Hexagram #: —</div>
+          <div class="mono" id="rLower">Lower: —</div>
+          <div class="mono" id="rUpper">Upper: —</div>
+          <div class="mono" id="rLines">Lines: —</div>
+        </div>
+      </div>
+      <p class="small" style="margin-top:10px; color:#8a93a1;">Descriptions/texts are not included yet. Use the numbers to look up meanings.</p>
+    </section>
+
+    <!-- Step log -->
+    <section class="card">
+      <div class="label">Step log</div>
+      <div id="log" class="log mono"></div>
+    </section>
+  </main>
+
+  <footer class="small">
+    Built with WebCrypto randomness. Splitting policy: one-shot uniform with a single resample if outside 32.5–67.5% of half.
+  </footer>
+
+<script>
+(() => {
+  "use strict";
+
+  /** ----------------------------------------------------------------------
+   *  Configuration & constants
+   *  ------------------------------------------------------------------- */
+  const CONFIG = Object.freeze({
+    splitBandLow: 0.325, // 32.5%
+    splitBandHigh: 0.675 // 67.5%
+  });
+
+  // King Wen mapping: rows = LOWER trigram (bits 000..111), columns = UPPER
+  const KING_WEN = [
+    [  1, 43, 14, 34,  9,  5, 26, 11 ],
+    [ 10, 58, 38, 54, 61, 60, 41, 19 ],
+    [ 13, 49, 30, 55, 37, 63, 22, 36 ],
+    [ 25, 17, 21, 51, 42,  3, 27, 24 ],
+    [ 44, 28, 50, 32, 57, 48, 18, 46 ],
+    [  6, 47, 64, 40, 59, 29,  4,  7 ],
+    [ 33, 31, 56, 62, 53, 39, 52, 15 ],
+    [ 12, 45, 35, 16, 20,  8, 23,  2 ],
+  ];
+  const TRIGRAM_INFO = {
+    '111': {han:'乾', pinyin:'Qián', en:'Heaven'},
+    '110': {han:'兌', pinyin:'Duì',  en:'Lake'},
+    '101': {han:'離', pinyin:'Lí',   en:'Fire'},
+    '100': {han:'震', pinyin:'Zhèn', en:'Thunder'},
+    '011': {han:'巽', pinyin:'Xùn',  en:'Wind'},
+    '010': {han:'坎', pinyin:'Kǎn',  en:'Water'},
+    '001': {han:'艮', pinyin:'Gèn',  en:'Mountain'},
+    '000': {han:'坤', pinyin:'Kūn',  en:'Earth'}
+  };
+
+  /** ----------------------------------------------------------------------
+   *  Utilities: DOM, RNG, asserts, logging
+   *  ------------------------------------------------------------------- */
+  const $ = (id) => document.getElementById(id);
+  const dom = {
+    // piles
+    working: $('working'), heaven: $('heaven'),
+    left: $('left'), right: $('right'),
+    handMan: $('handMan'), handL: $('handL'), handR: $('handR'),
+    rem1: $('rem1'), rem2: $('rem2'), rem3: $('rem3'),
+    rem1Label: $('rem1Label'), rem2Label: $('rem2Label'), rem3Label: $('rem3Label'),
+    // hex
+    hexPrimary: $('hexPrimary'), hexRelating: $('hexRelating'),
+    pNum: $('pNum'), pLower: $('pLower'), pUpper: $('pUpper'), pLines: $('pLines'),
+    rNum: $('rNum'), rLower: $('rLower'), rUpper: $('rUpper'), rLines: $('rLines'),
+    // badges & status
+    passBadge: $('passBadge'), lineBadge: $('lineBadge'), status: $('status'),
+    // log
+    log: $('log'),
+    // buttons
+    btnNew: $('btnNew'), btnTaiji: $('btnTaiji'),
+    btnSplit: $('btnSplit'), btnTake: $('btnTake'),
+    btnCastLeft: $('btnCastLeft'), btnLeftRem: $('btnLeftRem'),
+    btnCastRight: $('btnCastRight'), btnRightRem: $('btnRightRem'),
+    btnCommit: $('btnCommit'), btnGather: $('btnGather'),
+  };
+
+  function assert(cond, msg){
+    if(!cond){ throw new Error(msg || 'Assertion failed'); }
+  }
+
+  function cryptoInt(min, max){
+    // inclusive
+    const range = max - min + 1;
+    assert(range > 0, 'Invalid range');
+    const buf = new Uint32Array(1);
+    const maxUint = 0xFFFFFFFF;
+    const limit = Math.floor(maxUint / range) * range;
+    do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
+    return min + (buf[0] % range);
+  }
+
+  // Simple realism without bias: uniform draw; if outside [low,high], resample once
+  function splitRealistic(total){
+    const low = Math.ceil(total * CONFIG.splitBandLow);
+    const high = Math.floor(total * CONFIG.splitBandHigh);
+    let left = cryptoInt(1, total - 1);
+    if(left < low || left > high) left = cryptoInt(1, total - 1);
+    return { left, right: total - left };
+  }
+
+  function logPush(text){
+    const line = document.createElement('div');
+    line.textContent = text;
+    dom.log.prepend(line); // newest first
+  }
+
+  /** ----------------------------------------------------------------------
+   *  Rendering helpers
+   *  ------------------------------------------------------------------- */
+  function sticksEl(n, cls=''){
+    const frag = document.createDocumentFragment();
+    for(let i=0;i<n;i++){
+      const s = document.createElement('div');
+      s.className = 'stick' + (cls ? (' ' + cls) : '');
+      frag.appendChild(s);
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'stalks';
+    wrap.appendChild(frag);
+    return wrap;
+  }
+
+  function renderPile(el, n, cls=''){
+    el.textContent = '';
+    el.appendChild(sticksEl(n, cls));
+  }
+
+  function drawHex(el, lines, isRelating){
+    // lines: array of {yin:boolean, moving:boolean}
+    el.textContent = '';
+    for(let i=0;i<6;i++){
+      const L = lines[i] || { yin:true, moving:false };
+      const div = document.createElement('div');
+      div.className = 'line ' + (L.yin ? 'broken' : 'solid') + (L.moving && !isRelating ? ' moving' : '');
+      el.appendChild(div);
+    }
+  }
+
+  function bitsToIndex(bits3){
+    // bits3 is string like '011' => integer 3
+    return parseInt(bits3, 2);
+  }
+
+  function hexNumberFromBits(bits6){
+    const lowerBits = bits6.slice(0,3).join ? bits6.slice(0,3).join('') : bits6.slice(0,3);
+    const upperBits = bits6.slice(3,6).join ? bits6.slice(3,6).join('') : bits6.slice(3,6);
+    const li = bitsToIndex(lowerBits);
+    const ui = bitsToIndex(upperBits);
+    return KING_WEN[li][ui];
+  }
+
+  function trigramLabel(bits){
+    const t = TRIGRAM_INFO[bits] || {pinyin:'—', han:'—', en:'—'};
+    return '`' + bits + '` ' + t.pinyin + ' ' + t.han + ' (' + t.en + ')';
+  }
+
+  /** ----------------------------------------------------------------------
+   *  Yarrow rite core (pure operations)
+   *  ------------------------------------------------------------------- */
+  function passValueFromRemainder(rem){
+    // 9 or 8 => 2 ; 5 or 4 => 3
+    return (rem === 9 || rem === 8) ? 2 : 3;
+  }
+
+  function lineFromPasses(p1, p2, p3){
+    const s = passValueFromRemainder(p1) + passValueFromRemainder(p2) + passValueFromRemainder(p3);
+    // 6,7,8,9
+    return s;
+  }
+
+  /** ----------------------------------------------------------------------
+   *  State model
+   *  ------------------------------------------------------------------- */
+  const initialState = () => ({
+    passIndex: 0, // 0 none, then 1..3
+    lineIndex: 0, // 0..6
+    piles: {
+      working: 50, left: 0, right: 0, heaven: 0 // heaven includes Taiji + cast-offs + remainders
+    },
+    taiji: 0, // the initial 1 set aside (counts inside heaven visually but tracked for reset logic)
+    hand: { man: 0, L: 0, R: 0 },
+    remainders: [null, null, null], // pass1..3 values (5/9 or 4/8)
+    currentLinePasses: [], // accumulates for computing 6/7/8/9
+    lines: [], // built lines: array of {value:6|7|8|9, yin:boolean, moving:boolean}
+  });
+  let state = initialState();
+
+  /** ----------------------------------------------------------------------
+   *  UI state sync
+   *  ------------------------------------------------------------------- */
+  function updatePiles(){
+    renderPile(dom.working, state.piles.working);
+    renderPile(dom.heaven, state.piles.heaven, 'taiji');
+    renderPile(dom.left, state.piles.left);
+    renderPile(dom.right, state.piles.right);
+    renderPile(dom.handMan, state.hand.man, 'man');
+    renderPile(dom.handL, state.hand.L, 'rem');
+    renderPile(dom.handR, state.hand.R, 'rem');
+    renderPile(dom.rem1, state.remainders[0] || 0, 'rem');
+    renderPile(dom.rem2, state.remainders[1] || 0, 'rem');
+    renderPile(dom.rem3, state.remainders[2] || 0, 'rem');
+    dom.rem1Label.textContent = 'Pass 1: ' + (state.remainders[0] ? (state.remainders[0] + ' = ' + passValueFromRemainder(state.remainders[0])) : '—');
+    dom.rem2Label.textContent = 'Pass 2: ' + (state.remainders[1] ? (state.remainders[1] + ' = ' + passValueFromRemainder(state.remainders[1])) : '—');
+    dom.rem3Label.textContent = 'Pass 3: ' + (state.remainders[2] ? (state.remainders[2] + ' = ' + passValueFromRemainder(state.remainders[2])) : '—');
+  }
+
+  function renderHexPanels(){
+    const lines = state.lines;
+    drawHex(dom.hexPrimary, lines.map(l => ({yin:l.yin, moving:l.moving})), false);
+    const relating = lines.map(l => ({ yin: l.moving ? !l.yin : l.yin, moving:false }));
+    drawHex(dom.hexRelating, relating, true);
+
+    if(lines.length === 6){
+      const bits = lines.map(l => l.yin ? 0 : 1);
+      const lower = bits.slice(0,3).join('');
+      const upper = bits.slice(3,6).join('');
+      dom.pNum.textContent = 'Hexagram #: ' + hexNumberFromBits(bits);
+      dom.pLower.textContent = 'Lower: ' + trigramLabel(lower);
+      dom.pUpper.textContent = 'Upper: ' + trigramLabel(upper);
+      dom.pLines.textContent = 'Lines: ' + lines.map(l => l.value).join('');
+
+      const relBitsArr = lines.map(l => (l.moving ? (l.yin ? 1 : 0) : (l.yin ? 0 : 1)));
+      const relLower = relBitsArr.slice(0,3).join('');
+      const relUpper = relBitsArr.slice(3,6).join('');
+      dom.rNum.textContent = 'Hexagram #: ' + hexNumberFromBits(relBitsArr);
+      dom.rLower.textContent = 'Lower: ' + trigramLabel(relLower);
+      dom.rUpper.textContent = 'Upper: ' + trigramLabel(relUpper);
+      dom.rLines.textContent = 'Lines: ' + relBitsArr.join('');
+    } else {
+      dom.pNum.textContent = 'Hexagram #: —';
+      dom.pLower.textContent = 'Lower: —';
+      dom.pUpper.textContent = 'Upper: —';
+      dom.pLines.textContent = 'Lines: —';
+      dom.rNum.textContent = 'Hexagram #: —';
+      dom.rLower.textContent = 'Lower: —';
+      dom.rUpper.textContent = 'Upper: —';
+      dom.rLines.textContent = 'Lines: —';
+    }
+    dom.passBadge.textContent = 'Pass: ' + (state.passIndex || '—');
+    dom.lineBadge.textContent = 'Lines built: ' + state.lineIndex + '/6';
+  }
+
+  function renderAll(){
+    updatePiles();
+    renderHexPanels();
+    updateButtons();
+    validateTotals();
+  }
+
+  function updateButtons(){
+    const S = state;
+    const b = dom;
+    // disable all by default
+    [b.btnTaiji,b.btnSplit,b.btnTake,b.btnCastLeft,b.btnLeftRem,b.btnCastRight,b.btnRightRem,b.btnCommit,b.btnGather]
+      .forEach(x => x.disabled = true);
+
+    dom.status.textContent = '';
+
+    if(S.lineIndex === 6){
+      // All lines built: only allow New
+      return;
+    }
+
+    if(S.passIndex === 0){
+      b.btnTaiji.disabled = !(S.piles.working === 50 && S.taiji === 0);
+    }
+
+    if(S.passIndex >= 1 && S.passIndex <= 3){
+      const w = S.piles.working, L=S.piles.left, R=S.piles.right;
+      if(L===0 && R===0){
+        b.btnSplit.disabled = !(w === 49);
+      }else{
+        // in a pass
+        if(S.hand.man === 0){
+          b.btnTake.disabled = !(R > 0);
+        }else if(S.hand.L === 0){
+          // left casting
+          b.btnCastLeft.disabled = !(L >= 4);
+          b.btnLeftRem.disabled  = !(L > 0 && L < 4);
+        }else if(S.hand.R === 0){
+          // right casting
+          b.btnCastRight.disabled = !(R >= 4);
+          b.btnRightRem.disabled  = !(R > 0 && R < 4);
+        }else{
+          // both remainders present -> commit
+          b.btnCommit.disabled = false;
+        }
+      }
+    }
+
+    // Gathering allowed after finishing pass 3 of a line
+    if(S.passIndex === 4){
+      b.btnGather.disabled = false;
+    }
+  }
+
+  function validateTotals(){
+    const total = state.piles.working + state.piles.left + state.piles.right + state.piles.heaven + state.hand.man + state.hand.L + state.hand.R;
+    if(total !== 50){
+      dom.status.textContent = 'Invariant breach: total ≠ 50 (got ' + total + ')';
+      dom.status.style.color = 'var(--bad)';
+    }else{
+      dom.status.textContent = 'Total stalks = 50';
+      dom.status.style.color = '#88c6ff';
+    }
+  }
+
+  /** ----------------------------------------------------------------------
+   *  Actions
+   *  ------------------------------------------------------------------- */
+  function startNew(){
+    state = initialState();
+    // Move 50 stalks to working; Heaven empty
+    state.piles.working = 50; state.piles.heaven = 0; state.taiji = 0;
+    state.passIndex = 0;
+    logPush('— New hexagram started.');
+    renderAll();
+  }
+
+  function setTaiji(){
+    assert(state.passIndex === 0 && state.piles.working === 50 && state.taiji === 0, 'Set Taiji only at start');
+    state.piles.working = 49;
+    state.piles.heaven += 1;
+    state.taiji = 1;
+    state.passIndex = 1;
+    logPush('Set aside 1 → Taiji. Working=49.');
+    renderAll();
+  }
+
+  function split(){
+    assert(state.passIndex>=1 && state.passIndex<=3, 'Split only during a pass');
+    assert(state.piles.left===0 && state.piles.right===0, 'Piles must be empty before split');
+    assert(state.piles.working===49, 'Working should be 49 before split');
+    const {left, right} = splitRealistic(49);
+    state.piles.left = left;
+    state.piles.right = right;
+    state.piles.working = 0;
+    logPush(`Pass ${state.passIndex}: split → L ${left}, R ${right}`);
+    renderAll();
+  }
+
+  function takeOne(){
+    assert(state.piles.right>0 && state.hand.man===0, 'Need right pile and empty Man/Qi');
+    state.piles.right -= 1;
+    state.hand.man += 1;
+    state.piles.heaven += 1; // symbolically kept in hand but counts in totals
+    logPush(`Pass ${state.passIndex}: take 1 from Right → Hand (Man/Qi)`);
+    renderAll();
+  }
+
+  function castLeft(){
+    assert(state.piles.left>=4, 'Left must have ≥4');
+    state.piles.left -= 4;
+    state.piles.working += 4;
+    logPush('Cast Left ×4 → Working (+4)');
+    renderAll();
+  }
+
+  function leftRemainder(){
+    assert(state.piles.left>0 && state.piles.left<4, 'Left remainder must be 1–3');
+    const r = state.piles.left;
+    state.piles.left = 0;
+    state.hand.L += r;
+    logPush(`Left remainder ${r} → Hand`);
+    renderAll();
+  }
+
+  function castRight(){
+    assert(state.piles.right>=4, 'Right must have ≥4');
+    state.piles.right -= 4;
+    state.piles.working += 4;
+    logPush('Cast Right ×4 → Working (+4)');
+    renderAll();
+  }
+
+  function rightRemainder(){
+    assert(state.piles.right>=0 && state.piles.right<4, 'Right remainder must be 0–3');
+    const r = state.piles.right;
+    state.piles.right = 0;
+    state.hand.R += r;
+    logPush(`Right remainder ${r} → Hand`);
+    renderAll();
+  }
+
+  function commitHand(){
+    // Compute remainder this pass: Man(1) + L(0..3) + R(0..3) ⇒ 5 or 9 in pass1; 4 or 8 in others
+    assert(state.hand.man===1, 'Hand must contain Man/Qi');
+    assert(state.hand.L>=0 && state.hand.R>=0, 'Hand L/R present');
+    const total = state.hand.man + state.hand.L + state.hand.R;
+    const pass = state.passIndex;
+    const expected = pass===1 ? [5,9] : [4,8];
+    if(!expected.includes(total)){
+      logPush('Unexpected Hand total this pass: ' + total + ' (expected ' + expected.join('/') + ')');
+    }
+    state.remainders[pass-1] = total;
+    // Move Hand to remainder area (for visuals we just set counts in remX piles);
+    // Working already contains all the cast-off 4s; Heaven keeps Taiji + Man markers as counts.
+    // Clear Hand.
+    state.hand = {man:0, L:0, R:0};
+
+    logPush(`Commit Hand: Pass ${pass} ⇒ ${total} = ${passValueFromRemainder(total)}`);
+
+    // Reduce working by the remainder (those stalks are removed)
+    state.piles.working -= total;
+    state.piles.heaven += total;
+
+    // Advance pass or finalize line
+    if(pass < 3){
+      // Prepare for next pass: refill Working to 49 (it already is 49 after moving 4s back during casts)
+      assert(state.piles.left===0 && state.piles.right===0, 'Split piles should be empty');
+      // In classical tally, after commit we have working = 49 - remainder; but the ritual then continues from this working for next pass.
+      state.passIndex += 1;
+      // For UI affordance, prompt to split again
+      logPush(`Pass ${pass} closed. Working now ${state.piles.working}. Continue with Pass ${state.passIndex}.`);
+    }else{
+      // Close line: compute value from three remainders
+      const [p1,p2,p3] = state.remainders;
+      const val = lineFromPasses(p1,p2,p3); // 6..9
+      const yin = (val===6 || val===8);
+      const moving = (val===6 || val===9);
+      state.lines.push({ value: val, yin, moving });
+      state.lineIndex += 1;
+      logPush(`Line ${state.lineIndex} ⇒ ${val} (${moving ? 'moving ' : ''}${yin ? 'yin' : 'yang'})`);
+
+      // Reset per-line state
+      state.remainders = [null,null,null];
+      state.passIndex = 4; // special state: allow gather
+    }
+    renderAll();
+  }
+
+  function gather(){
+    // Move all but the Taiji back to Working to resume next line
+    const heavenKeep = state.taiji; // keep only the initial Taiji aside
+    const movable = state.piles.heaven - heavenKeep;
+    if(movable > 0){
+      state.piles.heaven -= movable;
+      state.piles.working += movable;
+    }
+    state.piles.left = 0; state.piles.right = 0;
+    state.hand = {man:0, L:0, R:0};
+    state.passIndex = 1; // next line pass 1
+    logPush('Gathered all removed (except Taiji) → Working. Working='+state.piles.working);
+    // If a full line was just finished, Working should be 49.
+    renderAll();
+  }
+
+  /** ----------------------------------------------------------------------
+   *  Wiring
+   *  ------------------------------------------------------------------- */
+  dom.btnNew.addEventListener('click', startNew);
+  dom.btnTaiji.addEventListener('click', setTaiji);
+  dom.btnSplit.addEventListener('click', split);
+  dom.btnTake.addEventListener('click', takeOne);
+  dom.btnCastLeft.addEventListener('click', castLeft);
+  dom.btnLeftRem.addEventListener('click', leftRemainder);
+  dom.btnCastRight.addEventListener('click', castRight);
+  dom.btnRightRem.addEventListener('click', rightRemainder);
+  dom.btnCommit.addEventListener('click', commitHand);
+  dom.btnGather.addEventListener('click', gather);
+
+  // Init
+  startNew(); // sets working=50; then user sets Taiji and proceeds
+  renderAll();
+})();
+</script>
+</body>
+</html>

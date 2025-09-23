@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>I Ching — Yarrow-Stalk Hexagram (WebCrypto)</title>
+  <style>
+    :root {
+      --bg: #0b0c0e; --panel:#14161a; --muted:#8a93a1; --text:#e6ebf2; --accent:#7aa2ff; --danger:#ff8b8b; --line:#e6ebf2; --white:#ffffff; --ok:#8bffb1;
+    }
+    html, body { height: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, sans-serif; }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
+    h1 { font-weight: 700; letter-spacing: .3px; margin: 0 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 20px; }
+
+    .grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; align-items: start; }
+    @media (max-width: 980px){ .grid { grid-template-columns: 1fr; } }
+
+    .card { background: var(--panel); border: 1px solid #1f232b; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); padding: 18px; }
+    .card h2 { margin: 0 0 10px; font-size: 18px; letter-spacing: .2px; }
+
+    .controls { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin: 12px 0 16px; }
+    @media (max-width: 560px){ .controls { grid-template-columns: 1fr 1fr; } }
+    button { appearance: none; border: 1px solid #20242d; background: #1a1d24; color: var(--text); padding: 10px 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: .15s ease; text-align:left; }
+    button:hover { transform: translateY(-1px); border-color: #2a2f3b; }
+    button.primary { background: linear-gradient(180deg,#1f59ff,#144bdb); border-color: #1a45c7; }
+    button.danger { background: linear-gradient(180deg,#b93232,#922626); border-color:#7a1f1f; }
+    button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    button small { display:block; color: var(--muted); font-weight: 500; }
+
+    .small { font-size: 13px; color: var(--muted); }
+
+    /* Hexagram drawing */
+    .hexwrap { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .hex { background: #111318; border: 1px solid #1f232b; border-radius: 12px; padding: 12px; display: grid; grid-template-rows: repeat(6, 1fr); gap: 8px; align-content: center; }
+    .line { height: 18px; position: relative; }
+    .yang, .yin-left, .yin-right { position: absolute; top: 0; height: 100%; background: var(--line); border-radius: 3px; }
+    .yang { left: 0; right: 0; }
+    .yin-left { left: 0; right: 52%; }
+    .yin-right { left: 52%; right: 0; }
+    .moving::after { content: ""; position: absolute; inset: -2px; border: 2px dashed var(--accent); border-radius: 6px; opacity:.9; }
+
+    .log { max-height: 340px; overflow: auto; padding-right: 6px; }
+    .log .entry { padding: 8px 10px; border-bottom: 1px solid #1e2129; }
+
+    /* Visualizer */
+    .viz { display:grid; grid-template-columns: 1fr; gap: 12px; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 980px){ .row { grid-template-columns: 1fr; } }
+
+    .pile { background:#10131a; border:1px solid #232737; border-radius:12px; padding:10px; }
+    .pile h4 { margin:0 0 6px; font-size:12px; color:var(--muted); display:flex; justify-content:space-between; align-items:center; }
+    .sticks { display:grid; grid-template-columns: repeat(auto-fill, minmax(4px, 0)); gap:6px 4px; align-items:end; min-height: 32px; }
+    .stick { width:4px; height:28px; background:var(--white); border-radius:2px; box-shadow: 0 0 0 1px rgba(0,0,0,.25); }
+    .stick.mq { outline:2px dashed var(--danger); }
+    .pill { padding:2px 8px; border:1px solid #2a3142; border-radius:999px; font-size:12px; color:#a8b1c0; }
+    .pill.ok { border-color:#2a4232; color:#99e9b6; }
+
+    .remGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>I Ching — Yarrow-Stalk Hexagram</h1>
+    <p class="sub">Wilhelm-style yarrow rite with <strong>WebCrypto</strong> randomness. <strong>Taiji</strong> stays set aside for the whole consultation. Each line has three operations; each operation begins by taking <em>one</em> from the right (Man/Qi), then counting both heaps by fours; remainders (Man/Qi + L rem + R rem) go to <em>Remainder (Pass n)</em>. The total across all piles is always <strong>50</strong>.</p>
+
+    <div class="grid">
+      <section class="card" aria-live="polite">
+        <h2>Controls</h2>
+        <div class="controls">
+          <button id="newBtn" class="primary">Start New Hexagram<small>Reset; Working=50; Lines cleared</small></button>
+          <button id="taijiBtn">Set Aside 1 (Taiji)<small>Working → Taiji (once per hexagram)</small></button>
+
+          <button id="splitBtn">Split (near-half)<small>Working → Left/Right</small></button>
+          <button id="takeBtn">Take 1 from Right (Man/Qi)<small>Start of each pass</small></button>
+
+          <button id="castLeftBtn">Cast Left ×4 → Working<small>Repeat while L &gt; 4</small></button>
+          <button id="leftRemBtn">Left remainder (1–4) → Hand<small>When L ≤ 4</small></button>
+
+          <button id="castRightBtn">Cast Right ×4 → Working<small>Repeat while R &gt; 4</small></button>
+          <button id="rightRemBtn">Right remainder (1–4) → Hand<small>When R ≤ 4</small></button>
+
+          <button id="commitBtn">Commit Hand → Remainder (Pass n)<small>P1: 9/5; P2/P3: 8/4</small></button>
+          <button id="gatherBtn">Gather for next line<small>Remainders → Working (back to 49)</small></button>
+        </div>
+
+        <div class="small" style="margin:-6px 0 10px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+          <span>Status: <span id="statusText">Ready</span></span>
+          <span id="sumText" class="pill">Total across piles: 50</span>
+          <span id="passBadge" class="pill ok">Pass: —</span>
+          <span id="lineBadge" class="pill">Lines built: 0/6</span>
+        </div>
+
+        <div class="viz">
+          <div class="row">
+            <div class="pile">
+              <h4><span>Working</span><span class="mono" id="workingCount">—</span></h4>
+              <div id="workingSticks" class="sticks" aria-label="Working pile"></div>
+            </div>
+            <div class="pile">
+              <h4><span>Taiji (太極, set‑aside)</span><span class="mono" id="taijiCount">—</span></h4>
+              <div id="taijiSticks" class="sticks" aria-label="Taiji set-aside"></div>
+              <div class="small">Symbolizes the Great Ultimate; never re-enters until the hexagram is complete.</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="pile">
+              <h4><span>Left — Heaven / Yang</span><span class="mono" id="leftCount">—</span></h4>
+              <div id="leftSticks" class="sticks" aria-label="Left pile"></div>
+            </div>
+            <div class="pile">
+              <h4><span>Right — Earth / Yin</span><span class="mono" id="rightCount">—</span></h4>
+              <div id="rightSticks" class="sticks" aria-label="Right pile"></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="pile">
+              <h4><span>Hand (Man/Qi & remainders)</span><span class="mono" id="handCount">—</span></h4>
+              <div class="small">Only the single from Right is labeled <em>Man/Qi</em>. Left/Right remainders are not Man/Qi.</div>
+              <div id="handSticks" class="sticks" aria-label="Hand (Man/Qi and remainders)"></div>
+              <div class="small">Breakdown: <span id="handBreakdown">—</span></div>
+            </div>
+            <div class="pile">
+              <h4><span>Remainder (this line)</span><span class="mono" id="remTotal">—</span></h4>
+              <div class="remGrid">
+                <div>
+                  <div class="small">Pass 1 (9 or 5)</div>
+                  <div id="rem1" class="sticks"></div>
+                </div>
+                <div>
+                  <div class="small">Pass 2 (8 or 4)</div>
+                  <div id="rem2" class="sticks"></div>
+                </div>
+                <div>
+                  <div class="small">Pass 3 (8 or 4)</div>
+                  <div id="rem3" class="sticks"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 style="margin-top:16px;">Step Log <span class="small" style="color:#8a93a1;">(newest first)</span></h2>
+        <div id="log" class="log card" style="padding:0;" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>Hexagram Builder</h2>
+        <div class="hexwrap" style="margin-top:8px;">
+          <div>
+            <div class="small" style="color:#8a93a1;margin-bottom:6px;">Primary (original)</div>
+            <div id="hexPrimary" class="hex" aria-label="Primary hexagram"></div>
+          </div>
+          <div>
+            <div class="small" style="color:#8a93a1;margin-bottom:6px;">Relating (after changes)</div>
+            <div id="hexRelating" class="hex" aria-label="Relating hexagram"></div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px; grid-template-columns: 1fr 1fr 1fr;">
+          <div class="pile">
+            <h4>Primary # (King Wen)</h4>
+            <div id="numPrimary" class="mono">—</div>
+          </div>
+          <div class="pile">
+            <h4>Relating # (if any)</h4>
+            <div id="numRelating" class="mono">—</div>
+          </div>
+          <div class="pile">
+            <h4>Lines (bottom→top)</h4>
+            <div id="linesBits" class="mono">—</div>
+          </div>
+        </div>
+        <p class="small" style="margin-top:10px; color:#8a93a1;">Descriptions/texts are not included yet. Use the numbers to look up meanings.</p>
+      </section>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // --- Trigram + King Wen mapping ---
+  const TRIGRAM_ORDER = ['111','110','101','100','011','010','001','000'];
+  const KING_WEN = [
+    [  1, 43, 14, 34,  9,  5, 26, 11 ],
+    [ 10, 58, 38, 54, 61, 60, 41, 19 ],
+    [ 13, 49, 30, 55, 37, 63, 22, 36 ],
+    [ 25, 17, 21, 51, 42,  3, 27, 24 ],
+    [ 44, 28, 50, 32, 57, 48, 18, 46 ],
+    [  6, 47, 64, 40, 59, 29,  4,  7 ],
+    [ 33, 31, 56, 62, 53, 39, 52, 15 ],
+    [ 12, 45, 35, 16, 20,  8, 23,  2 ],
+  ];
+
+  // --- DOM helpers ---
+  const $ = (id) => document.getElementById(id);
+  const logEl = $('log');
+  const statusText = $('statusText');
+  const sumText = $('sumText');
+  const passBadge = $('passBadge');
+  const lineBadge = $('lineBadge');
+
+  // Piles + counts
+  const workingCountEl = $('workingCount');
+  const workingSticksEl = $('workingSticks');
+  const taijiCountEl = $('taijiCount');
+  const taijiSticksEl = $('taijiSticks');
+  const leftCountEl = $('leftCount');
+  const rightCountEl = $('rightCount');
+  const leftSticksEl = $('leftSticks');
+  const rightSticksEl = $('rightSticks');
+  const handCountEl = $('handCount');
+  const handSticksEl = $('handSticks');
+  const handBreakdownEl = $('handBreakdown');
+  const remTotalEl = $('remTotal');
+  const rem1El = $('rem1');
+  const rem2El = $('rem2');
+  const rem3El = $('rem3');
+
+  // Hex UI
+  const hexPrimaryEl = $('hexPrimary');
+  const hexRelatingEl = $('hexRelating');
+  const numPrimaryEl = $('numPrimary');
+  const numRelatingEl = $('numRelating');
+  const linesBitsEl = $('linesBits');
+
+  // Buttons
+  const btnNew = $('newBtn');
+  const btnTaiji = $('taijiBtn');
+  const btnSplit = $('splitBtn');
+  const btnTake = $('takeBtn');
+  const btnCastLeft = $('castLeftBtn');
+  const btnLeftRem = $('leftRemBtn');
+  const btnCastRight = $('castRightBtn');
+  const btnRightRem = $('rightRemBtn');
+  const btnCommit = $('commitBtn');
+  const btnGather = $('gatherBtn');
+
+  // --- Crypto RNG (unbiased uniform int) ---
+  function cryptoInt(min, max) {
+    if (max <= min) throw new Error('Invalid range');
+    const range = max - min + 1;
+    const maxUint32 = 0xFFFFFFFF;
+    const limit = Math.floor(maxUint32 / range) * range;
+    const buf = new Uint32Array(1);
+    let x;
+    do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
+    return min + (x % range);
+  }
+
+  // Near-half split with bounded deviation
+  function splitNearHalf(total) {
+    const base = Math.floor(total / 2);
+    const maxDev = Math.max(1, Math.floor(total * 0.2)); // ≤20% deviation
+    const d = cryptoInt(0, maxDev);
+    const sign = cryptoInt(0, 1) === 0 ? -1 : 1;
+    let left = base + sign * d;
+    if (left <= 0) left = 1;
+    if (left >= total) left = total - 1;
+    return { left, right: total - left };
+  }
+
+  // --- State ---
+  let state;
+  function resetState(full=true) {
+    state = {
+      taiji: 0,
+      working: 50,
+      left: 0,
+      right: 0,
+      hand: { mq:0, l:0, r:0 }, // Man/Qi, left remainder, right remainder
+      rem: { p1:0, p2:0, p3:0 },
+      passIndex: 1,  // 1..3 for current line
+      lineIndex: full ? 0 : (state?.lineIndex || 0),
+      lines: full ? [] : (state?.lines || []),
+      step: 'await_taiji', // control sub-state
+      leftRemMoved: false,
+      rightRemMoved: false,
+    };
+  }
+
+  // Rendering helpers
+  function renderSticks(container, n, className=null, countMark=0) {
+    container.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement('div');
+      s.className = 'stick';
+      if (className && i >= n - countMark && countMark > 0) s.classList.add(className);
+      container.appendChild(s);
+    }
+  }
+
+  function renderPiles() {
+    // Working + Taiji
+    workingCountEl.textContent = state.working.toString();
+    renderSticks(workingSticksEl, state.working);
+
+    taijiCountEl.textContent = state.taiji.toString();
+    renderSticks(taijiSticksEl, state.taiji);
+
+    // Left / Right
+    if (state.left + state.right > 0) {
+      leftCountEl.textContent = `${state.left}`;
+      rightCountEl.textContent = `${state.right}`;
+      renderSticks(leftSticksEl, state.left);
+      renderSticks(rightSticksEl, state.right);
+    } else {
+      leftCountEl.textContent = rightCountEl.textContent = '—';
+      leftSticksEl.innerHTML = rightSticksEl.innerHTML = '';
+    }
+
+    // Hand (Man/Qi marked at end)
+    const handTotal = state.hand.mq + state.hand.l + state.hand.r;
+    handCountEl.textContent = handTotal.toString();
+    handBreakdownEl.textContent = `Man/Qi: ${state.hand.mq} · L rem: ${state.hand.l} · R rem: ${state.hand.r}`;
+    handSticksEl.innerHTML = '';
+    // L remainders
+    renderSticks(handSticksEl, state.hand.l);
+    // R remainders
+    const fragR = document.createElement('div');
+    renderSticks(fragR, state.hand.r);
+    while (fragR.firstChild) handSticksEl.appendChild(fragR.firstChild);
+    // Man/Qi
+    if (state.hand.mq > 0) {
+      const mqFrag = document.createElement('div');
+      renderSticks(mqFrag, state.hand.mq, 'mq', state.hand.mq);
+      while (mqFrag.firstChild) handSticksEl.appendChild(mqFrag.firstChild);
+    }
+
+    // Remainders by pass
+    renderSticks(rem1El, state.rem.p1);
+    renderSticks(rem2El, state.rem.p2);
+    renderSticks(rem3El, state.rem.p3);
+    remTotalEl.textContent = (state.rem.p1 + state.rem.p2 + state.rem.p3).toString();
+
+    // Sum check: must be 50
+    const total = state.taiji + state.working + state.left + state.right + handTotal + state.rem.p1 + state.rem.p2 + state.rem.p3;
+    sumText.textContent = `Total across piles: ${total}`;
+    sumText.className = 'pill ' + (total === 50 ? 'ok' : '');
+  }
+
+  // Hex drawing
+  function drawHex(container, lines, isRelating) {
+    container.innerHTML = '';
+    for (let i = 5; i >= 0; i--) {
+      const row = document.createElement('div'); row.className = 'line';
+      const data = lines[i];
+      if (data) {
+        if (data.yin) {
+          const l = document.createElement('div'); l.className = 'yin-left';
+          const r = document.createElement('div'); r.className = 'yin-right';
+          if (data.moving && !isRelating) { l.classList.add('moving'); r.classList.add('moving'); }
+          row.appendChild(l); row.appendChild(r);
+        } else {
+          const s = document.createElement('div'); s.className = 'yang';
+          if (data.moving && !isRelating) s.classList.add('moving');
+          row.appendChild(s);
+        }
+      } else {
+        const s = document.createElement('div'); s.className = 'yang'; s.style.opacity = .12; row.appendChild(s);
+      }
+      container.appendChild(row);
+    }
+  }
+
+  function hexNumberFromBits(bits) {
+    if (bits.length !== 6) return null;
+    const lowerTri = bits.slice(0,3).join('');
+    const upperTri = bits.slice(3,6).join('');
+    const li = TRIGRAM_ORDER.indexOf(lowerTri);
+    const ui = TRIGRAM_ORDER.indexOf(upperTri);
+    if (li === -1 || ui === -1) return null;
+    return KING_WEN[ui][li];
+  }
+
+  function renderHexAndNumbers() {
+    const lines = state.lines || [];
+    drawHex(hexPrimaryEl, lines.map(l => ({ yin:l.yin, moving:l.moving })), false);
+    const relating = lines.map(l => ({ yin: l.moving ? !l.yin : l.yin, moving: false }));
+    drawHex(hexRelatingEl, relating, true);
+
+    const bits = lines.map(l => l.yin ? 0 : 1);
+    linesBitsEl.textContent = bits.length ? bits.join('') : '—';
+
+    const numP = hexNumberFromBits(bits);
+    numPrimaryEl.textContent = numP || '—';
+
+    if (bits.length === 6 && lines.some(l => l.moving)) {
+      const relBits = lines.map(l => (l.moving ? (l.yin ? 1 : 0) : (l.yin ? 0 : 1)));
+      numRelatingEl.textContent = hexNumberFromBits(relBits);
+    } else {
+      numRelatingEl.textContent = '—';
+    }
+
+    passBadge.textContent = `Pass: ${['—','1','2','3'][Math.min(Math.max(state.passIndex,0),3)]}`;
+    lineBadge.textContent = `Lines built: ${state.lineIndex}/6`;
+  }
+
+  function renderAll() {
+    renderPiles();
+    renderHexAndNumbers();
+    statusText.textContent = stepLabel();
+    updateButtons();
+  }
+
+  function stepLabel() {
+    switch (state.step) {
+      case 'await_taiji': return 'Set Aside 1 (Taiji) to begin the line sequence.';
+      case 'await_split': return `Pass ${state.passIndex}: split Working into Left/Right (near-half).`;
+      case 'await_take1': return `Pass ${state.passIndex}: take 1 from Right (Man/Qi) → Hand.`;
+      case 'await_cast_left': return 'Cast Left ×4 while L > 4; then move the Left remainder (1–4) to Hand.';
+      case 'await_left_rem': return 'Move the Left remainder (1–4) to Hand.';
+      case 'await_cast_right': return 'Cast Right ×4 while R > 4; then move the Right remainder (1–4) to Hand.';
+      case 'await_right_rem': return 'Move the Right remainder (1–4) to Hand.';
+      case 'await_commit': return `Commit Hand to Remainder (Pass ${state.passIndex}).`;
+      case 'await_gather': return 'Line resolved: Gather remainders back to Working for the next line (Taiji stays 1).';
+      default: return 'Ready.';
+    }
+  }
+
+  function updateButtons() {
+    btnTaiji.disabled = !(state.step === 'await_taiji' && state.working > 0);
+    btnSplit.disabled = !(state.step === 'await_split' && state.working > 1);
+    btnTake.disabled = !(state.step === 'await_take1' && state.right > 0 && state.hand.mq === 0);
+
+    const canCastLeft = state.step === 'await_cast_left' && state.left > 4;
+    const canLeftRem = (state.step === 'await_cast_left' || state.step === 'await_left_rem') && state.left <= 4 && !state.leftRemMoved;
+    btnCastLeft.disabled = !canCastLeft;
+    btnLeftRem.disabled = !canLeftRem;
+
+    const canCastRight = state.step === 'await_cast_right' && state.right > 4;
+    const canRightRem = (state.step === 'await_cast_right' || state.step === 'await_right_rem') && state.right <= 4 && !state.rightRemMoved;
+    btnCastRight.disabled = !canCastRight;
+    btnRightRem.disabled = !canRightRem;
+
+    btnCommit.disabled = !(state.step === 'await_commit');
+    btnGather.disabled = !(state.step === 'await_gather');
+  }
+
+  // --- Log helper ---
+  function addLog(html){ const d=document.createElement('div'); d.className='entry'; d.innerHTML=html; logEl.prepend(d); }
+
+  // --- Actions ---
+  function startNew(){ resetState(true); addLog('— New hexagram started. Working=50.'); renderAll(); }
+
+  function setTaiji(){
+    if (state.step !== 'await_taiji' || state.working <= 0) return;
+    state.working -= 1; state.taiji += 1; addLog('<span class="small">Set Aside 1 → Taiji.</span>');
+    // Begin first pass
+    state.step = 'await_split'; state.passIndex = 1; renderAll();
+  }
+
+  function split(){
+    if (state.step !== 'await_split' || state.working <= 1) return;
+    const { left, right } = splitNearHalf(state.working);
+    state.left = left; state.right = right; state.working = 0; state.hand = {mq:0,l:0,r:0}; state.leftRemMoved=false; state.rightRemMoved=false;
+    addLog(`<div class="mono">Pass ${state.passIndex}: split → L ${left}, R ${right}</div>`);
+    state.step = 'await_take1'; renderAll();
+  }
+
+  function takeOne(){
+    if (state.step !== 'await_take1' || state.right <= 0 || state.hand.mq !== 0) return;
+    state.right -= 1; state.hand.mq = 1; addLog(`<div class="mono">Pass ${state.passIndex}: take 1 from Right → Hand (Man/Qi)</div>`);
+    state.step = 'await_cast_left'; renderAll();
+  }
+
+  function castLeft(){
+    if (!(state.step === 'await_cast_left' && state.left > 4)) return;
+    state.left -= 4; state.working += 4; addLog(`<div class="mono">Cast Left ×4 → Working (+4)</div>`);
+    if (state.left <= 4) state.step = 'await_left_rem';
+    renderAll();
+  }
+
+  function leftRemainder(){
+    if (!((state.step === 'await_cast_left' || state.step === 'await_left_rem') && state.left <= 4 && !state.leftRemMoved)) return;
+    const remL = state.left; state.left = 0; state.hand.l += remL; state.leftRemMoved = true;
+    addLog(`<div class="mono">Left remainder ${remL || 4} → Hand</div>`);
+    state.step = 'await_cast_right'; renderAll();
+  }
+
+  function castRight(){
+    if (!(state.step === 'await_cast_right' && state.right > 4)) return;
+    state.right -= 4; state.working += 4; addLog(`<div class="mono">Cast Right ×4 → Working (+4)</div>`);
+    if (state.right <= 4) state.step = 'await_right_rem';
+    renderAll();
+  }
+
+  function rightRemainder(){
+    if (!((state.step === 'await_cast_right' || state.step === 'await_right_rem') && state.right <= 4 && !state.rightRemMoved)) return;
+    const remR = state.right; state.right = 0; state.hand.r += remR; state.rightRemMoved = true;
+    addLog(`<div class="mono">Right remainder ${remR || 4} → Hand</div>`);
+    state.step = 'await_commit'; renderAll();
+  }
+
+  function commitHand(){
+    if (state.step !== 'await_commit') return;
+    // If a side landed exactly on 0, interpret remainder as 4 (classical rule 0→4)
+    const effL = state.hand.l === 0 ? 0 : state.hand.l; // already 0..4; 0 stays 0 because we prevented casting to 0 by stopping at <=4
+    const effR = state.hand.r === 0 ? 0 : state.hand.r;
+    const add = state.hand.mq + effL + effR;
+    const key = state.passIndex === 1 ? 'p1' : (state.passIndex === 2 ? 'p2' : 'p3');
+    state.rem[key] += add; // store the pass remainder
+    addLog(`<div class="mono">Commit Hand: Man/Qi ${state.hand.mq} + L rem ${effL} + R rem ${effR} ⇒ Remainder${state.passIndex} +${add}</div>`);
+    // clear Hand
+    state.hand = {mq:0,l:0,r:0};
+
+    // Sanity notices
+    if (state.passIndex === 1 && !(add === 9 || add === 5)) addLog('<div class="mono" style="color:#ffb3b3;">Note: Pass 1 remainder should be 9 or 5.</div>');
+    if ((state.passIndex === 2 || state.passIndex === 3) && !(add === 8 || add === 4)) addLog('<div class="mono" style="color:#ffb3b3;">Note: Pass 2/3 remainder should be 8 or 4.</div>');
+
+    // Advance
+    if (state.passIndex < 3) {
+      state.passIndex += 1; state.step = 'await_split';
+    } else {
+      // Resolve line from Working count: 36→9, 32→8, 28→7, 24→6
+      const val = Math.floor(state.working / 4);
+      const map = {6:{yin:true,moving:true,label:'6 (old yin, moving)'},7:{yin:false,moving:false,label:'7 (young yang)'},8:{yin:true,moving:false,label:'8 (young yin)'},9:{yin:false,moving:true,label:'9 (old yang, moving)'}};
+      const info = map[val];
+      if (!info) addLog('<div class="mono" style="color:#ffb3b3;">Unexpected Working total; expected 24/28/32/36.</div>');
+      else {
+        state.lines.push({ value: val, yin: info.yin, moving: info.moving });
+        state.lineIndex += 1;
+        addLog(`<strong>Line ${state.lineIndex} → ${info.label}</strong>`);
+      }
+      state.step = 'await_gather';
+    }
+    renderAll();
+  }
+
+  function gather(){
+    if (state.step !== 'await_gather') return;
+    const ret = state.rem.p1 + state.rem.p2 + state.rem.p3;
+    state.working += ret; state.rem = {p1:0,p2:0,p3:0}; state.left=0; state.right=0; state.hand={mq:0,l:0,r:0};
+    addLog(`<strong>Gather: Remainders (Pass 1–3) → Working +${ret}</strong>`);
+    if (state.lineIndex < 6) { state.passIndex = 1; state.step = 'await_split'; }
+    renderAll();
+  }
+
+  // Events
+  btnNew.addEventListener('click', startNew);
+  btnTaiji.addEventListener('click', setTaiji);
+  btnSplit.addEventListener('click', split);
+  btnTake.addEventListener('click', takeOne);
+  btnCastLeft.addEventListener('click', castLeft);
+  btnLeftRem.addEventListener('click', leftRemainder);
+  btnCastRight.addEventListener('click', castRight);
+  btnRightRem.addEventListener('click', rightRemainder);
+  btnCommit.addEventListener('click', commitHand);
+  btnGather.addEventListener('click', gather);
+
+  // Initialize
+  resetState(true); renderAll();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>I Ching — Yarrow-Stalk Hexagram (WebCrypto)</title>
+  <style>
+    :root {
+      --bg: #0b0c0e; --panel:#14161a; --muted:#8a93a1; --text:#e6ebf2; --accent:#7aa2ff; --accent2:#8bffb1; --danger:#ff8b8b; --line:#e6ebf2;
+    }
+    html, body { height: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, sans-serif; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    h1 { font-weight: 700; letter-spacing: .3px; margin: 0 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 20px; }
+
+    .grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; align-items: start; }
+    @media (max-width: 980px){ .grid { grid-template-columns: 1fr; } }
+
+    .card { background: var(--panel); border: 1px solid #1f232b; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); padding: 18px; }
+    .card h2 { margin: 0 0 10px; font-size: 18px; letter-spacing: .2px; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 8px; }
+    button { appearance: none; border: 1px solid #20242d; background: #1a1d24; color: var(--text); padding: 10px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: .15s ease; }
+    button:hover { transform: translateY(-1px); border-color: #2a2f3b; }
+    button.primary { background: linear-gradient(180deg,#1f59ff,#144bdb); border-color: #1a45c7; }
+    button.danger { background: linear-gradient(180deg,#b93232,#922626); border-color:#7a1f1f; }
+    button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .stack { display: grid; gap: 8px; }
+    .kv { display:flex; justify-content: space-between; gap: 12px; padding: 8px 10px; border:1px dashed #242936; border-radius: 10px; color: var(--muted); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+
+    /* Hexagram drawing */
+    .hexwrap { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .hex { background: #111318; border: 1px solid #1f232b; border-radius: 12px; padding: 12px; display: grid; grid-template-rows: repeat(6, 1fr); gap: 8px; align-content: center; }
+    .hex h3 { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+    .line { height: 18px; position: relative; }
+    .yang, .yin-left, .yin-right { position: absolute; top: 0; height: 100%; background: var(--line); border-radius: 3px; }
+    .yang { left: 0; right: 0; }
+    .yin-left { left: 0; right: 52%; }
+    .yin-right { left: 52%; right: 0; }
+    .moving::after { content: ""; position: absolute; inset: -2px; border: 2px dashed var(--accent); border-radius: 6px; opacity:.9; }
+
+    .legend { display:flex; gap: 10px; align-items: center; color: var(--muted); font-size: 13px; }
+    .legend .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); display:inline-block; margin-right:6px; }
+
+    .log { max-height: 340px; overflow: auto; padding-right: 6px; }
+    .log .entry { padding: 8px 10px; border-bottom: 1px solid #1e2129; }
+    .small { font-size: 13px; color: var(--muted); }
+
+    .badget { display:inline-flex; align-items:center; gap:8px; background:#11141a; border:1px solid #262b37; padding:6px 10px; border-radius: 999px; color:var(--muted); }
+    .tag { background:#131722; border:1px solid #232837; padding:2px 8px; border-radius:999px; font-size:12px; color:#a8b1c0; }
+
+    .numbers { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; }
+    .numbers div { background:#10131a; border:1px solid #232737; border-radius:10px; padding:8px 10px; }
+    .numbers h4 { margin:0 0 4px; font-size:12px; color:var(--muted); }
+    .numbers p { margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; }
+
+    .result { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+    .result .box { background:#10131a; border:1px solid #232737; border-radius:10px; padding:10px; }
+    .result .box h4 { margin:0 0 6px; font-size:12px; color:var(--muted); }
+    .result .box p { margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>I Ching — Yarrow-Stalk Generator</h1>
+    <p class="sub">Interactive, step-by-step simulation of the traditional yarrow-stalk rite, using <strong>WebCrypto</strong> randomness. Build the hexagram line-by-line; if moving lines occur (6 or 9), the relating hexagram is also computed.</p>
+
+    <div class="grid">
+      <section class="card" aria-live="polite">
+        <h2>Controls</h2>
+        <div class="controls">
+          <button id="newBtn" class="primary">Start New Hexagram</button>
+          <button id="stepBtn">Next Step</button>
+          <button id="autoLineBtn">Auto-run Current Line</button>
+          <button id="autoHexBtn">Auto-run Whole Hexagram</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+        <div class="legend small">
+          <span class="badget"><span class="dot"></span> moving line (6 = old yin, 9 = old yang)</span>
+          <span class="tag">Yang = solid</span>
+          <span class="tag">Yin = broken</span>
+        </div>
+
+        <div class="stack" style="margin-top:14px;">
+          <div class="kv"><span>Line progress</span><span id="progress" class="mono">—</span></div>
+          <div class="kv"><span>Pass within line</span><span id="passLabel" class="mono">—</span></div>
+          <div class="numbers">
+            <div><h4>Current stalks</h4><p id="stalks" class="mono">—</p></div>
+            <div><h4>Removed this pass</h4><p id="removed" class="mono">—</p></div>
+          </div>
+        </div>
+
+        <h2 style="margin-top:16px;">Step Log</h2>
+        <div id="log" class="log card" style="padding:0;" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>Hexagram Builder</h2>
+        <div class="hexwrap" style="margin-top:8px;">
+          <div>
+            <div class="small muted" style="margin-bottom:6px;">Primary (original)</div>
+            <div id="hexPrimary" class="hex" aria-label="Primary hexagram"></div>
+          </div>
+          <div>
+            <div class="small muted" style="margin-bottom:6px;">Relating (after changes)</div>
+            <div id="hexRelating" class="hex" aria-label="Relating hexagram"></div>
+          </div>
+        </div>
+
+        <div class="result" style="margin-top:14px;">
+          <div class="box">
+            <h4>Primary # (King Wen)</h4>
+            <p id="numPrimary" class="mono">—</p>
+          </div>
+          <div class="box">
+            <h4>Relating # (if any)</h4>
+            <p id="numRelating" class="mono">—</p>
+          </div>
+          <div class="box">
+            <h4>Lines (bottom→top)</h4>
+            <p id="linesBits" class="mono">—</p>
+          </div>
+        </div>
+        <p class="small muted" style="margin-top:10px;">Descriptions/texts are not included yet — placeholders only. You can use the numbers to look up meanings.</p>
+      </section>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // --- Trigram + King Wen mapping (from standard lookup table) ---
+  // Trigram order used here (index 0..7): ☰ (111), ☱ (110), ☲ (101), ☳ (100), ☴ (011), ☵ (010), ☶ (001), ☷ (000)
+  const TRIGRAM_ORDER = ['111','110','101','100','011','010','001','000'];
+  const TRIGRAM_SYMBOL = { '111':'\u2630', '110':'\u2631', '101':'\u2632', '100':'\u2633', '011':'\u2634', '010':'\u2635', '001':'\u2636', '000':'\u2637' };
+  // King Wen lookup matrix: rows = UPPER trigram index, cols = LOWER trigram index
+  const KING_WEN = [
+    [  1, 43, 14, 34,  9,  5, 26, 11 ],
+    [ 10, 58, 38, 54, 61, 60, 41, 19 ],
+    [ 13, 49, 30, 55, 37, 63, 22, 36 ],
+    [ 25, 17, 21, 51, 42,  3, 27, 24 ],
+    [ 44, 28, 50, 32, 57, 48, 18, 46 ],
+    [  6, 47, 64, 40, 59, 29,  4,  7 ],
+    [ 33, 31, 56, 62, 53, 39, 52, 15 ],
+    [ 12, 45, 35, 16, 20,  8, 23,  2 ],
+  ];
+
+  // --- DOM helpers ---
+  const byId = id => document.getElementById(id);
+  const logEl = byId('log');
+  const stalksEl = byId('stalks');
+  const removedEl = byId('removed');
+  const progressEl = byId('progress');
+  const passLabelEl = byId('passLabel');
+  const hexPrimaryEl = byId('hexPrimary');
+  const hexRelatingEl = byId('hexRelating');
+  const numPrimaryEl = byId('numPrimary');
+  const numRelatingEl = byId('numRelating');
+  const linesBitsEl = byId('linesBits');
+
+  const btnNew = byId('newBtn');
+  const btnStep = byId('stepBtn');
+  const btnAutoLine = byId('autoLineBtn');
+  const btnAutoHex = byId('autoHexBtn');
+  const btnReset = byId('resetBtn');
+
+  // --- Crypto RNG (unbiased uniform int in [min, max]) ---
+  function cryptoInt(min, max) {
+    if (max < min) throw new Error('Invalid range');
+    const range = max - min + 1;
+    const maxUint32 = 0xFFFFFFFF;
+    const limit = Math.floor(maxUint32 / range) * range;
+    const buf = new Uint32Array(1);
+    let x;
+    do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
+    return min + (x % range);
+  }
+
+  // --- Yarrow helpers ---
+  const rem4nz = (n) => { const m = n % 4; return m === 0 ? 4 : m; };
+
+  function linePass1(count) {
+    const left = cryptoInt(1, count - 1);
+    const right = count - left;
+    const takenFromRight = 1;
+    const remLeft = rem4nz(left);
+    const remRight = rem4nz(right - takenFromRight);
+    const removed = takenFromRight + remLeft + remRight; // 5 or 9
+    const remaining = count - removed; // 44 or 40
+    return { left, right, takenFromRight, remLeft, remRight, removed, remaining, pass: 1 };
+  }
+  function linePassN(count, pass) { // pass 2 or 3
+    const left = cryptoInt(1, count - 1);
+    const right = count - left;
+    const remLeft = rem4nz(left);
+    const remRight = rem4nz(right);
+    const removed = remLeft + remRight; // 4 or 8
+    const remaining = count - removed; // 36/32/28/24
+    return { left, right, takenFromRight: 0, remLeft, remRight, removed, remaining, pass };
+  }
+
+  function valueFromRemaining(remaining) { // 36,32,28,24 -> 9,8,7,6
+    return Math.floor(remaining / 4);
+  }
+
+  const LINE_INFO = {
+    6: { label: '6 (old yin, broken, moving)', yin: true, moving: true },
+    7: { label: '7 (young yang, solid, stable)', yin: false, moving: false },
+    8: { label: '8 (young yin, broken, stable)', yin: true, moving: false },
+    9: { label: '9 (old yang, solid, moving)', yin: false, moving: true },
+  };
+
+  // --- State ---
+  let state = {};
+  function resetAll() {
+    state = {
+      lineIndex: 0, // 0..5 (building from bottom)
+      passIndex: 0, // 0 (idle), 1..3
+      count: 49,
+      lines: [], // each: {value, yin, moving}
+      primaryBits: [], // 0/1 (yin/yang) bottom->top
+      log: []
+    };
+    renderAll();
+  }
+
+  function startNew() {
+    resetAll();
+    appendLog('— New hexagram started. 50 stalks prepared, 1 set aside → working with 49.');
+  }
+
+  // --- Rendering ---
+  function appendLog(html) {
+    const div = document.createElement('div');
+    div.className = 'entry';
+    div.innerHTML = html;
+    logEl.prepend(div);
+  }
+
+  function renderAll() {
+    stalksEl.textContent = state.passIndex === 0 ? '—' : state.count.toString();
+    removedEl.textContent = '—';
+    progressEl.textContent = `${Math.min(state.lineIndex, 6)}/6 lines`;
+    passLabelEl.textContent = state.passIndex === 0 ? '—' : `pass ${state.passIndex} of 3`;
+
+    // draw hexagrams
+    drawHex(hexPrimaryEl, state.lines.map(l => ({ yin:l.yin, moving:l.moving })), false);
+    // Relating hex: flip moving lines (6<->7? actually 6->yang, 9->yin)
+    const relatingLines = state.lines.map(l => ({
+      yin: l.moving ? !l.yin : l.yin,
+      moving: false
+    }));
+    drawHex(hexRelatingEl, relatingLines, true);
+
+    // Numbers
+    const bits = state.lines.map(l => l.yin ? 0 : 1);
+    linesBitsEl.textContent = bits.length ? bits.join('') : '—';
+
+    const numP = hexNumberFromBits(bits);
+    numPrimaryEl.textContent = numP || '—';
+
+    // relating number only shown if any moving lines and 6 lines completed
+    if (bits.length === 6 && state.lines.some(l => l.moving)) {
+      const relBits = state.lines.map(l => (l.moving ? (l.yin ? 1 : 0) : (l.yin ? 0 : 1)));
+      numRelatingEl.textContent = hexNumberFromBits(relBits);
+    } else {
+      numRelatingEl.textContent = '—';
+    }
+
+    // buttons
+    btnStep.disabled = state.lineIndex >= 6 && state.passIndex === 0;
+    btnAutoLine.disabled = state.lineIndex >= 6;
+    btnAutoHex.disabled = state.lineIndex >= 6 && state.passIndex === 0;
+  }
+
+  function drawHex(container, lines, isRelating) {
+    container.innerHTML = '';
+    // Fill up to 6 rows (top to bottom visually), mapping from state.lines bottom->top
+    for (let i = 5; i >= 0; i--) {
+      const row = document.createElement('div');
+      row.className = 'line';
+      const data = lines[i];
+      if (data) {
+        if (data.yin) {
+          const l = document.createElement('div'); l.className = 'yin-left';
+          const r = document.createElement('div'); r.className = 'yin-right';
+          if (data.moving && !isRelating) { l.classList.add('moving'); r.classList.add('moving'); }
+          row.appendChild(l); row.appendChild(r);
+        } else {
+          const s = document.createElement('div'); s.className = 'yang';
+          if (data.moving && !isRelating) s.classList.add('moving');
+          row.appendChild(s);
+        }
+      } else {
+        // placeholder faint line
+        const s = document.createElement('div'); s.className = 'yang'; s.style.opacity = .12; row.appendChild(s);
+      }
+      container.appendChild(row);
+    }
+  }
+
+  // Compute King Wen number from 6 bits (bottom->top)
+  function hexNumberFromBits(bits) {
+    if (bits.length !== 6) return null;
+    const lowerTri = bits.slice(0,3).join('');
+    const upperTri = bits.slice(3,6).join('');
+    const li = TRIGRAM_ORDER.indexOf(lowerTri);
+    const ui = TRIGRAM_ORDER.indexOf(upperTri);
+    if (li === -1 || ui === -1) return null;
+    return KING_WEN[ui][li];
+  }
+
+  // --- Step engine ---
+  function nextStep() {
+    if (state.lineIndex >= 6) return; // done
+
+    if (state.passIndex === 0) {
+      // new line begins
+      state.count = 49; state.passIndex = 1;
+      renderAll();
+      appendLog(`<span class="small">Line ${state.lineIndex+1} — begin with 49 stalks.</span>`);
+      return;
+    }
+
+    let result;
+    if (state.passIndex === 1) result = linePass1(state.count);
+    else result = linePassN(state.count, state.passIndex);
+
+    // log & update
+    stalksEl.textContent = result.remaining;
+    removedEl.textContent = `${result.removed}`;
+    passLabelEl.textContent = `pass ${result.pass} of 3`;
+
+    const detail = `
+      <div class="mono">
+        <div>Pass ${result.pass}: split → L ${result.left}, R ${result.right}${result.takenFromRight ? ` (−${result.takenFromRight} from R)` : ''}</div>
+        <div>Remainders: L ${result.remLeft}, R ${result.remRight} ⇒ removed ${result.removed}; remaining ${result.remaining}</div>
+      </div>`;
+    appendLog(detail);
+
+    state.count = result.remaining;
+
+    if (state.passIndex === 3) {
+      // finish line
+      const val = valueFromRemaining(state.count); // 6/7/8/9
+      const info = LINE_INFO[val];
+      const yin = info.yin; const moving = info.moving;
+      state.lines.push({ value: val, yin, moving });
+      appendLog(`<strong>Line ${state.lineIndex+1} → ${info.label}</strong>`);
+
+      state.lineIndex += 1;
+      state.passIndex = 0; // ready for next line
+      renderAll();
+
+      if (state.lineIndex === 6) {
+        appendLog(`<strong>Hexagram complete.</strong>`);
+      }
+    } else {
+      state.passIndex += 1;
+      renderAll();
+    }
+  }
+
+  function autoRunLine() {
+    if (state.lineIndex >= 6) return;
+    if (state.passIndex === 0) nextStep(); // start line
+    while (state.passIndex !== 0) nextStep();
+  }
+
+  function autoRunHex() {
+    while (state.lineIndex < 6) autoRunLine();
+  }
+
+  // --- Wire up ---
+  btnNew.addEventListener('click', startNew);
+  btnStep.addEventListener('click', nextStep);
+  btnAutoLine.addEventListener('click', autoRunLine);
+  btnAutoHex.addEventListener('click', autoRunHex);
+  btnReset.addEventListener('click', resetAll);
+
+  // Initialize UI
+  resetAll();
+})();
+</script>
+</body>
+</html>
