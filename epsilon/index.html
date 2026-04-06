@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prime Membrane Explorer — Last Pulse Calculator</title>
+  <style>
+    :root{
+      --bg:#0f1115;--panel:#151822;--ink:#e6e8ef;--muted:#9aa3b2;--accent:#7dd3fc;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;
+      --mono: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      --sans: Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0d0f14,#0f1115 20%,#0a0b0f);color:var(--ink);font-family:var(--sans);}
+    .wrap{max-width:1000px;margin:0 auto;padding:24px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+    h1{font-size:clamp(20px,2.4vw,28px);margin:0;font-weight:700}
+    .card{background:var(--panel);border:1px solid #1f2432;border-radius:16px;padding:18px 18px 12px 18px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+    .grid{display:grid;grid-template-columns:1fr;gap:14px}
+    @media (min-width:900px){.grid{grid-template-columns: 1.1fr .9fr}}
+    label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+    input[type="number"]{width:120px;background:#0c0f16;color:var(--ink);border:1px solid #232839;border-radius:10px;padding:10px 12px;font-family:var(--mono);font-size:14px}
+    button{background:linear-gradient(180deg,#111728,#0d1222);border:1px solid #243049;color:var(--ink);padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+    button:hover{border-color:#35507a}
+    .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .kv{display:grid;grid-template-columns:180px 1fr;gap:8px;align-items:center}
+    .mono{font-family:var(--mono)}
+    .muted{color:var(--muted)}
+    .pill{display:inline-block;padding:.25rem .6rem;border:1px solid #2b3347;border-radius:999px;background:#111521;color:var(--muted);font-size:12px}
+    .val{font-family:var(--mono);background:#0b0e14;border:1px solid #1e2536;border-radius:10px;padding:10px 12px;overflow:auto}
+    .ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+    .bar{height:8px;background:#0b0e14;border:1px solid #1e2536;border-radius:999px;overflow:hidden}
+    .bar > div{height:100%;background:linear-gradient(90deg,#7dd3fc,#34d399)}
+    .foot{margin-top:8px;font-size:12px;color:var(--muted)}
+    .small{font-size:13px}
+    .sep{height:1px;background:#202637;margin:10px 0}
+    .flex{display:flex;gap:12px;align-items:center}
+    .hint{font-size:12px;color:var(--muted)}
+    .code{font-family:var(--mono);white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Prime Membrane Explorer — Last Pulse Calculator</h1>
+      <span class="pill">ε = 10<sup>−n</sup> • last pulse = p<sub>n</sub>/10<sup>n</sup> • gap = (10<sup>n</sup> − p<sub>n</sub>)ε</span>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="row">
+          <div>
+            <label for="n">Resolution exponent (n)</label><br>
+            <input id="n" type="number" min="1" max="24" step="1" value="6" />
+            <span class="hint">ε = 10<sup>−n</sup>. Try 1–12; larger n may take longer.</span>
+          </div>
+          <div>
+            <label>&nbsp;</label><br>
+            <button id="compute">Compute last pulse</button>
+            <button id="stop" style="display:none">Stop</button>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="kv"><div>ε (quantum):</div><div class="val" id="eps"></div></div>
+        <div class="kv"><div>Scale 10<sup>n</sup>:</div><div class="val" id="tenn"></div></div>
+        <div class="kv"><div>Largest prime &lt; 10<sup>n</sup>:</div><div class="val" id="p"></div></div>
+        <div class="kv"><div>Second largest prime:</div><div class="val" id="p2"></div></div>
+        <div class="kv"><div>Last pulse x<sub>last</sub>:</div><div class="val" id="xlast"></div></div>
+        <div class="kv"><div>Gap to 1 (Δ = 10<sup>n</sup> − p):</div><div class="val" id="delta"></div></div>
+        <div class="kv"><div>Gap in ε-ticks:</div><div class="val" id="delta_eps"></div></div>
+        <div class="kv"><div>Second→Last gap:</div><div class="val" id="gap_pair"></div></div>
+
+        <div class="sep"></div>
+        <div class="kv"><div>Status:</div><div class="val small" id="status">Idle.</div></div>
+      </section>
+
+      <section class="card">
+        <div class="kv"><div>Position bar:</div><div class="bar"><div id="pos" style="width:0%"></div></div></div>
+        <div class="kv"><div>Notes:</div>
+          <div class="small muted">
+            <ul>
+              <li>We search downward from 10<sup>n</sup>−1 to find the largest prime p<sub>n</sub> (and the second largest).</li>
+              <li>Primality is tested with a deterministic Miller–Rabin set of bases for 64–80 bit range; works well for n ≤ 18. Larger n may be slower.</li>
+              <li>x<sub>last</sub> = p<sub>n</sub>/10<sup>n</sup> is shown exactly with n digits after the decimal.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="kv"><div>Debug log:</div><div class="val code" id="log" style="max-height:220px"></div></div>
+      </section>
+    </div>
+
+    <div class="foot">Built for interactive exploration of your prime membrane model. No data leaves your browser.</div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const log = (msg) => { const el = $("log"); el.textContent += msg + "\n"; el.scrollTop = el.scrollHeight; };
+  const set = (id, html) => $(id).innerHTML = html;
+  const fmt = (x) => x.toLocaleString('en');
+
+  function pow10n(n){
+    let ten = 10n;
+    let r = 1n;
+    for(let i=0;i<n;i++) r *= ten;
+    return r;
+  }
+
+  function modPow(base, exp, mod){
+    let b = base % mod;
+    let e = exp;
+    let r = 1n;
+    while(e > 0n){
+      if(e & 1n) r = (r * b) % mod;
+      b = (b * b) % mod;
+      e >>= 1n;
+    }
+    return r;
+  }
+
+  function isPrime(n){
+    if(n < 2n) return false;
+    const smallPrimes = [2n,3n,5n,7n,11n,13n,17n,19n,23n,29n,31n,37n];
+    for(const p of smallPrimes){ if(n === p) return true; if(n % p === 0n) return n === p; }
+    // write n-1 = d * 2^s
+    let d = n - 1n, s = 0n;
+    while((d & 1n) === 0n){ d >>= 1n; s++; }
+    // Deterministic bases sufficient for 64–80 bit range
+    const bases = [2n,3n,5n,7n,11n,13n,17n,19n,23n,29n,31n,37n];
+    for(const a of bases){
+      if(a % n === 0n) continue;
+      let x = modPow(a, d, n);
+      if(x === 1n || x === n-1n) continue;
+      let skip = false;
+      for(let r=1n; r<s; r++){
+        x = (x * x) % n;
+        if(x === n-1n){ skip = true; break; }
+      }
+      if(skip) continue;
+      return false;
+    }
+    return true;
+  }
+
+  let stopFlag = false;
+  $("stop").onclick = () => { stopFlag = true; set('status', 'Stopping…'); };
+
+  async function findPrevPrimes(start){
+    // Returns [p, q] = largest and second-largest primes <= start
+    let x = (start % 2n === 0n) ? start - 1n : start; // odd start
+    let found = [];
+    while(x > 1n){
+      if(stopFlag){ throw new Error('Stopped'); }
+      if(isPrime(x)){
+        found.push(x);
+        if(found.length === 2) return found;
+        x -= 2n; // continue for second prime
+      } else {
+        x -= 2n;
+      }
+      // yield to UI
+      await new Promise(r => setTimeout(r, 0));
+    }
+    return found;
+  }
+
+  function toFixedDecimal(p, n){
+    // Returns string for p/10^n with exactly n digits after decimal
+    const tenN = pow10n(n);
+    let s = (p).toString();
+    if(s.length < n){ s = '0'.repeat(Number(n - BigInt(s.length))) + s; }
+    const intPart = '0';
+    const frac = s.padStart(Number(n), '0');
+    return intPart + '.' + frac;
+  }
+
+  async function compute(){
+    stopFlag = false;
+    $("stop").style.display = 'inline-block';
+    set('log','');
+    set('status','Computing…');
+    const n = Number($("n").value);
+    if(!(n >= 1 && n <= 24)){
+      set('status','Choose n between 1 and 24.');
+      return;
+    }
+    const tenN = pow10n(n);
+    const eps = 1 / Math.pow(10, n);
+    set('eps', `<span class="mono">${eps}</span>`);
+    set('tenn', `<span class="mono">${fmt(tenN)}</span>`);
+
+    const start = tenN - 1n;
+    log(`Searching from 10^${n} − 1 = ${start.toString()} downward…`);
+    let p, q;
+    try{
+      [p, q] = await findPrevPrimes(start);
+    }catch(e){ set('status', e.message || 'Stopped'); $("stop").style.display='none'; return; }
+
+    if(!p){ set('status','No prime found (unexpected).'); $("stop").style.display='none'; return; }
+
+    const delta = tenN - p; // ticks to 1
+    const xlast = toFixedDecimal(p, BigInt(n));
+    set('p', `<span class="mono">${fmt(p)}</span>`);
+    set('xlast', `<span class="mono">${xlast}</span>`);
+    set('delta', `<span class="mono">Δ = ${fmt(delta)} = ${Number(delta)} × ε</span>`);
+    set('delta_eps', `<span class="mono">${fmt(delta)} ε = ${(Number(delta) * eps).toLocaleString('en',{maximumSignificantDigits:6})}</span>`);
+
+    if(q){
+      const gap = p - q;
+      set('p2', `<span class="mono">${fmt(q)}</span>`);
+      set('gap_pair', `<span class="mono">${fmt(gap)} ε = ${(Number(gap) * eps).toLocaleString('en',{maximumSignificantDigits:6})}</span>`);
+    } else {
+      set('p2', '<span class="mono">—</span>');
+      set('gap_pair','<span class="mono">—</span>');
+    }
+
+    const posPct = Number(p * 10000n / tenN) / 100; // percentage with 2 decimals
+    $("pos").style.width = posPct + '%';
+
+    set('status', `Done. Last pulse at ${xlast} (Δ = ${delta.toString()} ε to 1).`);
+    $("stop").style.display = 'none';
+  }
+
+  $("compute").onclick = compute;
+})();
+</script>
+</body>
+</html>

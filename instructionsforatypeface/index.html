@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Instructions for a Typeface (A–Z / a–z)</title>
+  <style>
+    :root {
+      --bg: #0f0f10;
+      --fg: #f2f2f2;
+      --muted: rgba(242,242,242,.72);
+      --hairline: rgba(242,242,242,.18);
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --shadow: rgba(0,0,0,.35);
+      --max: 980px;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 16px/1.35 ui-serif, Georgia, "Times New Roman", Times, serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .wrap {
+      min-height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    header, footer {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--hairline);
+    }
+    footer { border-bottom: 0; border-top: 1px solid var(--hairline); }
+
+    header .row, footer .row {
+      max-width: var(--max);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      white-space: nowrap;
+    }
+    .brand .title {
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      color: var(--muted);
+    }
+    .brand .count {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    main {
+      display: grid;
+      place-items: center;
+      padding: 34px 20px;
+    }
+    .card {
+      max-width: var(--max);
+      width: 100%;
+      border: 1px solid var(--hairline);
+      background: var(--panel);
+      border-radius: 14px;
+      box-shadow: 0 18px 42px var(--shadow);
+      padding: 34px 28px;
+    }
+    .prompt-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin-bottom: 18px;
+      color: var(--muted);
+    }
+    .prompt-meta .idx {
+      font-size: 18px;
+      letter-spacing: 0.01em;
+    }
+    .prompt-meta .key {
+      font-size: 18px;
+      letter-spacing: 0.03em;
+      text-transform: none;
+    }
+    .prompt-text {
+      font-size: clamp(28px, 3.2vw, 44px);
+      line-height: 1.18;
+      letter-spacing: 0.005em;
+      margin: 0;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    button {
+      appearance: none;
+      border: 1px solid var(--hairline);
+      background: var(--panel2);
+      color: var(--fg);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: 14px/1 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      cursor: pointer;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+    }
+    button:hover { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.26); }
+    button:active { transform: translateY(1px); }
+    button:focus-visible { outline: 2px solid rgba(242,242,242,.35); outline-offset: 2px; }
+
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: right;
+      margin: 0;
+    }
+
+    /* Colophon overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.52);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      z-index: 999;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      width: min(760px, 100%);
+      border: 1px solid var(--hairline);
+      background: rgba(20,20,22,.92);
+      border-radius: 14px;
+      box-shadow: 0 22px 60px rgba(0,0,0,.55);
+      padding: 18px 18px 16px;
+      backdrop-filter: blur(6px);
+    }
+    .modal header {
+      padding: 0 0 10px;
+      border: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .modal h2 {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    .modal .body {
+      border-top: 1px solid var(--hairline);
+      padding-top: 12px;
+      color: var(--fg);
+      font-size: 15px;
+      line-height: 1.45;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    .modal .body p { margin: 0 0 10px; }
+    .modal .body .muted { color: var(--muted); }
+    .kbd {
+      border: 1px solid var(--hairline);
+      background: rgba(255,255,255,.08);
+      border-radius: 8px;
+      padding: 2px 7px;
+      font-size: 12px;
+      color: var(--muted);
+      display: inline-block;
+      transform: translateY(-1px);
+    }
+    a { color: rgba(242,242,242,.9); }
+    a:hover { color: #fff; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="row">
+        <div class="brand">
+          <div class="title">Instructions for a Typeface</div>
+          <div class="count" id="countLabel" aria-live="polite"></div>
+        </div>
+        <div class="controls">
+          <button id="colophonBtn" type="button">Colophon</button>
+          <button id="nextBtn" type="button" title="Next prompt (N)">Next</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="prompt">
+        <div class="prompt-meta">
+          <div class="idx" id="promptIdx">—</div>
+          <div class="key" id="promptKey">—</div>
+        </div>
+        <p class="prompt-text" id="prompt">Click “Next”.</p>
+      </section>
+    </main>
+
+    <footer>
+      <div class="row">
+        <p class="hint">
+          Keys: <span class="kbd">N</span> next · <span class="kbd">C</span> colophon · <span class="kbd">Esc</span> close
+        </p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Colophon modal -->
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="colophonTitle">
+    <div class="modal">
+      <header>
+        <h2 id="colophonTitle">Colophon</h2>
+        <button id="closeColophonBtn" type="button" title="Close (Esc)">Close</button>
+      </header>
+      <div class="body">
+        <p>
+          This page is an homage to Laurel Schwulst’s <em>Instructions for a Typeface</em> (now offline),
+          retrieved via the Internet Archive’s Wayback Machine.
+        </p>
+        <p>
+          Several prompts also carry a quiet thread from an essay outline by <span class="muted">cathschmidt</span>:
+          on imperialism, typography, and the technical constraints of printing and computing—especially the ways
+          “support” and “standards” can disguise imposed defaults.
+        </p>
+        <p class="muted">
+          Implementation: a finite deck of 52 prompts is shuffled; “Next” walks the deck without repeats, then reshuffles.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Prompts are ordered as a–z (1–26), then A–Z (27–52).
+    // The UI shuffles a working deck to avoid repeats until exhaustion.
+
+    const PROMPTS = [
+      // a–z
+      { key: "a", n: 1,  text: "Make a typeface that speaks in a single vernacular—and goes quiet in all others." },
+      { key: "b", n: 2,  text: "Make a typeface from signage you’ve never stood beside. Keep the distance in the forms." },
+      { key: "c", n: 3,  text: "Make a typeface called “Neutral.” Do not change the drawings. Only change what it claims." },
+      { key: "d", n: 4,  text: "Make a typeface that blurs as it approaches certainty." },
+      { key: "e", n: 5,  text: "Make a typeface designed for mispronunciation—beautifully, consistently wrong." },
+      { key: "f", n: 6,  text: "Make a typeface that assumes agreement. Let dissent appear as spacing errors." },
+      { key: "g", n: 7,  text: "Make a typeface whose sidebearings follow property lines." },
+      { key: "h", n: 8,  text: "Make a typeface that looks like it was built for a different climate." },
+      { key: "i", n: 9,  text: "Make a typeface that leans (always italic), but refuses emphasis." },
+      { key: "j", n: 10, text: "Make a typeface from tools, not pen-strokes. Let the tool marks remain." },
+      { key: "k", n: 11, text: "Make a typeface whose proportions come from a map drawn for extraction." },
+      { key: "l", n: 12, text: "Make a typeface that insists it is universal. Mark the points where it breaks." },
+      { key: "m", n: 13, text: "Make a typeface whose stroke weight changes with the cost of labor." },
+      { key: "n", n: 14, text: "Make a typeface that negotiates the baseline each time it lands." },
+      { key: "o", n: 15, text: "Make a typeface that only behaves at one size. Never disclose the size." },
+      { key: "p", n: 16, text: "Make a typeface as if paper is scarce and transport is heavy." },
+      { key: "q", n: 17, text: "Make a typeface optimized for export. Let the local accents fall off in transit." },
+      { key: "r", n: 18, text: "Make a typeface by removing authorship until the emptiness becomes a signature." },
+      { key: "s", n: 19, text: "Make a typeface that performs sincerity poorly—but tries very hard." },
+      { key: "t", n: 20, text: "Make a typeface that cannot be kerned without leaving a record of the choice." },
+      { key: "u", n: 21, text: "Make a typeface that looks correct only when misused." },
+      { key: "v", n: 22, text: "Make a typeface whose verticals come from infrastructure, not handwriting." },
+      { key: "w", n: 23, text: "Make a typeface designed elsewhere, adapted hurriedly, and still shipped." },
+      { key: "x", n: 24, text: "Make a typeface where clarity is replaced by compliance." },
+      { key: "y", n: 25, text: "Make a typeface that impersonates the handmade—and slips up in the details." },
+      { key: "z", n: 26, text: "Make a typeface that ends before the alphabet does. Let the missing letters speak." },
+
+      // A–Z
+      { key: "A", n: 27, text: "Make a typeface that requires permission. Decide who can grant it." },
+      { key: "B", n: 28, text: "Make a typeface whose Bold is an argument, not a weight." },
+      { key: "C", n: 29, text: "Make a typeface by standardizing something that keeps trying to stay plural." },
+      { key: "D", n: 30, text: "Make a typeface that flattens difference in the name of smooth operation." },
+      { key: "E", n: 31, text: "Make a typeface that reads left-to-right even when the text refuses." },
+      { key: "F", n: 32, text: "Make a typeface optimized for reproduction—then notice what reading loses." },
+      { key: "G", n: 33, text: "Make a typeface whose glyph set is a confession: what it includes, and what it won’t." },
+      { key: "H", n: 34, text: "Make a typeface designed to travel farther than its maker ever will." },
+      { key: "I", n: 35, text: "Make a typeface that treats ornament as error—and watch the errors bloom." },
+      { key: "J", n: 36, text: "Make a typeface that measures progress typographically: ‘before’ and ‘after’ in the curves." },
+      { key: "K", n: 37, text: "Make a typeface that improves legibility by erasing context." },
+      { key: "L", n: 38, text: "Make a typeface with an obscured lineage. Leave only faint traces of inheritance." },
+      { key: "M", n: 39, text: "Make a typeface meant to survive translation. Let it come back changed." },
+      { key: "N", n: 40, text: "Make a typeface that tries to speak for others. Let the cracks show." },
+      { key: "O", n: 41, text: "Make a typeface whose geometry comes from networks: rails, cables, pipelines." },
+      { key: "P", n: 42, text: "Make a typeface that assumes permanence—then force it to live on screens." },
+      { key: "Q", n: 43, text: "Make a typeface whose question marks are more confident than its statements." },
+      { key: "R", n: 44, text: "Make a typeface that rearranges hierarchy without changing a single word." },
+      { key: "S", n: 45, text: "Make a typeface that mistakes control for clarity." },
+      { key: "T", n: 46, text: "Make a typeface that works best when imposed—and then refuse to impose it." },
+      { key: "U", n: 47, text: "Make a typeface that claims to ‘support’ a script by trimming it to fit." },
+      { key: "V", n: 48, text: "Make a variable font whose axes map power, not style." },
+      { key: "W", n: 49, text: "Make a typeface that appears local but was designed remotely. Let latency shape the curves." },
+      { key: "X", n: 50, text: "Make a typeface that treats neutrality as an aesthetic—and ideology as invisible." },
+      { key: "Y", n: 51, text: "Make a typeface that survives replication but loses meaning each time it’s copied." },
+      { key: "Z", n: 52, text: "Make a typeface that cannot be finished without refusal. Build the refusal into the alphabet." }
+    ];
+
+    function shuffleInPlace(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    const els = {
+      prompt: document.getElementById("prompt"),
+      idx: document.getElementById("promptIdx"),
+      key: document.getElementById("promptKey"),
+      count: document.getElementById("countLabel"),
+      nextBtn: document.getElementById("nextBtn"),
+      colophonBtn: document.getElementById("colophonBtn"),
+      overlay: document.getElementById("overlay"),
+      closeColophonBtn: document.getElementById("closeColophonBtn"),
+    };
+
+    let deck = [];
+    let cursor = 0; // 0..51
+
+    function resetDeck() {
+      deck = shuffleInPlace([...PROMPTS]);
+      cursor = 0;
+      updateCount();
+    }
+
+    function updateCount() {
+      // show "k / 52" where k is how many have been shown in the current cycle
+      const shown = Math.min(cursor, 52);
+      els.count.textContent = shown === 0 ? "52 prompts" : `${shown} / 52`;
+    }
+
+    function showPrompt(p, shownIndex) {
+      els.idx.textContent = `${p.n}`;
+      els.key.textContent = `${p.key}`;
+      els.prompt.textContent = p.text;
+      els.count.textContent = `${shownIndex} / 52`;
+    }
+
+    function next() {
+      if (deck.length === 0) resetDeck();
+      if (cursor >= deck.length) {
+        // cycle complete; reshuffle and restart
+        resetDeck();
+      }
+      const p = deck[cursor];
+      cursor += 1;
+      showPrompt(p, cursor);
+    }
+
+    function openColophon() {
+      els.overlay.classList.add("open");
+      // move focus to close button for accessibility
+      els.closeColophonBtn.focus();
+    }
+
+    function closeColophon() {
+      els.overlay.classList.remove("open");
+      els.colophonBtn.focus();
+    }
+
+    // Events
+    els.nextBtn.addEventListener("click", next);
+    els.colophonBtn.addEventListener("click", openColophon);
+    els.closeColophonBtn.addEventListener("click", closeColophon);
+
+    // click outside modal closes
+    els.overlay.addEventListener("click", (e) => {
+      if (e.target === els.overlay) closeColophon();
+    });
+
+    // keyboard shortcuts
+    document.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if (k === "n") next();
+      if (k === "c") {
+        if (els.overlay.classList.contains("open")) closeColophon();
+        else openColophon();
+      }
+      if (e.key === "Escape" && els.overlay.classList.contains("open")) closeColophon();
+    });
+
+    // Initialize
+    resetDeck();
+  </script>
+</body>
+</html>
