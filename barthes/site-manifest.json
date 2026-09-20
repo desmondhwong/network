@@ -1,0 +1,226 @@
+{
+  "_generated": "Codex / OpenAI / gpt-6; static build; see source README.md",
+  "schema": "sitemap-static-build-1",
+  "files": [
+    {
+      "path": "app.js",
+      "bytes": 53573,
+      "sha256": "c23f8bd8d11b2bed711bcbf5e869b77d3fb02706c41106ea75c47dddec0b8352"
+    },
+    {
+      "path": "catalog.js",
+      "bytes": 11697,
+      "sha256": "3ffedd4dd3c5b36e98e36a86182feeeea231654a341b89b62f3622bdc6a601be"
+    },
+    {
+      "path": "connections.js",
+      "bytes": 5791,
+      "sha256": "6e3a679c39daf77f9caeed2488c28853a75ac33bc3cc7c4a2ef4bf032cf9417f"
+    },
+    {
+      "path": "critique--ideology-and-power.html",
+      "bytes": 4351,
+      "sha256": "d8c6475fde4ed453b43ef9b1033697aed18b330023146a20842d21aefe6376ab"
+    },
+    {
+      "path": "critique--novelty-and-evidence.html",
+      "bytes": 5668,
+      "sha256": "170598d3c43a0c648f366424d2e526870de58a13823892672375e9d2d886b9c4"
+    },
+    {
+      "path": "critique--persona.html",
+      "bytes": 4292,
+      "sha256": "17d7e0d17566e8bf3b3be60a67fd94261aa88429e4f3f86e6b455490a000c094"
+    },
+    {
+      "path": "critique--recursive-loops.html",
+      "bytes": 5384,
+      "sha256": "cd174263ada4d45c844aea915ae43f6b83a55f903b34924bb96e93970d9eb96c"
+    },
+    {
+      "path": "critique--technosolutionism.html",
+      "bytes": 4319,
+      "sha256": "9c3ed9ebff4b877dd7d57e041f7e225df3d1f3953868b1b77338746140e048f7"
+    },
+    {
+      "path": "data.js",
+      "bytes": 115533,
+      "sha256": "6e64f34f7e173eba4562d8f89cb0ec1e117903be60ba5644317972d9aad4c3f4"
+    },
+    {
+      "path": "extensions--multimodal.html",
+      "bytes": 5481,
+      "sha256": "6f7e08da9224a132b0f1a543945ee5432f4946bf00d90b7878abf292fc16c746"
+    },
+    {
+      "path": "extensions--multiple-models.html",
+      "bytes": 3926,
+      "sha256": "9ad2480c2984aa28e15ce6700d53bcaeb9022f4955b0b06faa748a26960f53f5"
+    },
+    {
+      "path": "formats--mandala.html",
+      "bytes": 4198,
+      "sha256": "dc6acc41af55ba65446f1b567b806a3b7aa31233ad5d1c9acbadde9077ee073b"
+    },
+    {
+      "path": "formats--prose-and-maps.html",
+      "bytes": 4164,
+      "sha256": "8055a842ef1cb78241d9355a3964d36be94e5a81dde3c28cbc91bd60ec6f6045"
+    },
+    {
+      "path": "foundations--activation-field.html",
+      "bytes": 4254,
+      "sha256": "d51f6c020d594bd5b485a07146a9f82c4291e9cdffbf6ecc0509c4cc94bda2fe"
+    },
+    {
+      "path": "foundations--corpus-membrane.html",
+      "bytes": 4181,
+      "sha256": "b49a87ba0a949e0a603a2ab6a4d3991916e25674bd1333d71b8933aa0f5c7e3c"
+    },
+    {
+      "path": "foundations--cultural-hologram.html",
+      "bytes": 4095,
+      "sha256": "67ce8763f6f5a8e9d1113e11ba4f187b470a000f04f8593d690c5124a6009ab8"
+    },
+    {
+      "path": "foundations--digital-trace.html",
+      "bytes": 5395,
+      "sha256": "b3a03794b24ea0ce118dbe9dffc0cd5158a56079ea42c750667ffaafad2f25ad"
+    },
+    {
+      "path": "foundations--language-and-reality.html",
+      "bytes": 4383,
+      "sha256": "c55bc2aabb0beba93206f5f6e48c843387af8a293dcf964a9099ca5f17620cfb"
+    },
+    {
+      "path": "foundations--latent-manifold.html",
+      "bytes": 5168,
+      "sha256": "d7787e57814fd81677ecf478f42d7cfc483503fb960fa80bf9814b1592e34a0c"
+    },
+    {
+      "path": "graph.js",
+      "bytes": 18195,
+      "sha256": "17d956a7e7c45ef8b05816075b1fe124f93a2ccc5294036e0b85ce82b2079a54"
+    },
+    {
+      "path": "index.html",
+      "bytes": 5870,
+      "sha256": "fe8ffdc3ac39cf0bdeb271ddca06813c58e209385edd7f6d659795d8fa8fafef"
+    },
+    {
+      "path": "navigation.js",
+      "bytes": 9591,
+      "sha256": "8b2211a68d4bf61f700809a8385cdc1f5b0aab4028e1211b0b1b0bfc10cb3a1c"
+    },
+    {
+      "path": "path.js",
+      "bytes": 2295,
+      "sha256": "8998f83f612bced2aa07a53380603d44836f6621500a4ed92315d14f04dcbddd"
+    },
+    {
+      "path": "practice--epistemic-posture.html",
+      "bytes": 4243,
+      "sha256": "83f9b6c633619aa008abba68517d3b0a26608ad699cdeea9f42dece80c7907eb"
+    },
+    {
+      "path": "practice--exercises--attractor-survey.html",
+      "bytes": 4396,
+      "sha256": "44247cef214d7a95aa18509a0cae973dbd603c78860b2f369b3fe3a3ebfb60bc"
+    },
+    {
+      "path": "practice--exercises--boundary-search.html",
+      "bytes": 4592,
+      "sha256": "5cdd616857394619bb740165b0de04f336fdb8d9c165023b19ad810c04d88ca4"
+    },
+    {
+      "path": "practice--exercises--integration.html",
+      "bytes": 4252,
+      "sha256": "95e6fe204a1b86fbf84e00fbf9ef9df6e5dbea603e18d07a0a1955675ccce350"
+    },
+    {
+      "path": "practice--lenses.html",
+      "bytes": 4231,
+      "sha256": "acae66ab3b7352381936e6f919b7185d614d56bd0a3793358dbf4dced98ac291"
+    },
+    {
+      "path": "practice--operators--composition.html",
+      "bytes": 4177,
+      "sha256": "d9976d485fab0b792cb73b8ec8835467a1be0e5ea89f449c26551e4f4849eff7"
+    },
+    {
+      "path": "practice--operators--hyperrelation.html",
+      "bytes": 4289,
+      "sha256": "bc79d93af2b472e3a964f226f121bd8147ee0553420ea364440a6f2c58b12c9c"
+    },
+    {
+      "path": "practice--operators--recursion.html",
+      "bytes": 4493,
+      "sha256": "9a013e13178d906b1854ea2273f7f996e798374ad05891f989f53c2b151eecc9"
+    },
+    {
+      "path": "practice--operators--topological-thinking.html",
+      "bytes": 4387,
+      "sha256": "a6dceeba43e24c190c515875c8b7456171a5b2ea32911a76f56dbb9c5570b5dd"
+    },
+    {
+      "path": "practice--parallax.html",
+      "bytes": 4207,
+      "sha256": "28919c8b32d68f46ba85cec4994950e7a6417bb00f42a20494e7711f22f252a8"
+    },
+    {
+      "path": "practice--reindexing.html",
+      "bytes": 3823,
+      "sha256": "0d9914508f309230a366322710f9222149e185d78b0b34feee613de74effe2da"
+    },
+    {
+      "path": "practice--telescope-protocol.html",
+      "bytes": 6160,
+      "sha256": "98bc8f32da445c0f0bf4321839cb6de7f372e2dd2ea0cca34f684a4cc09a2ddf"
+    },
+    {
+      "path": "sources.html",
+      "bytes": 7138,
+      "sha256": "c26a2557d4ee7d482a52509941f038f4105df4a5f6398e3fd924edd25aa3e239"
+    },
+    {
+      "path": "start--reading-paths.html",
+      "bytes": 6132,
+      "sha256": "8ef3a37ddf6e277f48635218d329b3db3d39ad7740d930df4980b1a8986942b9"
+    },
+    {
+      "path": "start--what-is-hlc.html",
+      "bytes": 4516,
+      "sha256": "4deed5eab6bc3ca8883dffba8d759236f7b5197a059944f9b42deb454fb1bde0"
+    },
+    {
+      "path": "styles.css",
+      "bytes": 13237,
+      "sha256": "bdd1819ecededc03085e61801ec1f59fcd58d95261c511a005fda7d8dfa16ce5"
+    },
+    {
+      "path": "terrain--attractors.html",
+      "bytes": 4416,
+      "sha256": "448622ca7f054425f01087a31a14be9cc4f32a0e11f9a52fb569791df6a31baa"
+    },
+    {
+      "path": "terrain--conceptual-exoplanets.html",
+      "bytes": 4274,
+      "sha256": "2d60b22429935114d3a49eab898b68825fb07ac2e5045d330bb764b1ef80aa86"
+    },
+    {
+      "path": "terrain--voids.html",
+      "bytes": 4372,
+      "sha256": "e6fc6009e22d2645b09b278dcd8c8697bc99b567a55cb6b4c1b6511dc3197dbd"
+    },
+    {
+      "path": "workspace.js",
+      "bytes": 8571,
+      "sha256": "31f7910ea883c70fe680f3b85e52768706fbccf2fc59ad8fab54ea1be73df64f"
+    },
+    {
+      "path": "zoom.js",
+      "bytes": 3639,
+      "sha256": "1f8641354a5fc958a328a030c0e05e92629ce32b5d16aa94dbb2d904fcb5fc5b"
+    }
+  ]
+}
