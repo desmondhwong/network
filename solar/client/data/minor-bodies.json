@@ -1,0 +1,108 @@
+{
+  "bodies": [
+    {
+      "id": "Ceres",
+      "name": "Ceres",
+      "kind": "asteroid",
+      "color": "#b6aba0",
+      "radiusKm": 469.7,
+      "epoch": "2026-10-01T00:00:00.000Z",
+      "position": [
+        0.2813640960305013,
+        2.658391853898681,
+        0.03232641860227679
+      ],
+      "velocityAUPerDay": [
+        -0.01051220716614709,
+        0.0003097329830152059,
+        0.001946325305006978
+      ],
+      "source": {
+        "target": "Target body name: 1 Ceres (A801 AA)               {source: JPL#48}",
+        "apiVersion": "1.2"
+      },
+      "command": "1;",
+      "solution": "2021-Apr-13_11:04:44   # obs: 1075 (1995-2021)",
+      "solarGMKm3S2": 132712440041.27942,
+      "sourceFile": "Ceres.json"
+    },
+    {
+      "id": "Vesta",
+      "name": "Vesta",
+      "kind": "asteroid",
+      "color": "#b8aaa0",
+      "radiusKm": 261.385,
+      "epoch": "2026-10-01T00:00:00.000Z",
+      "position": [
+        2.337996884515201,
+        0.6920812239914068,
+        -0.3052380201834965
+      ],
+      "velocityAUPerDay": [
+        -0.002208776934938092,
+        0.010518590649145,
+        -0.00004326838400169162
+      ],
+      "source": {
+        "target": "Target body name: 4 Vesta (A807 FA)               {source: JPL#36}",
+        "apiVersion": "1.2"
+      },
+      "command": "4;",
+      "solution": "2021-Apr-13_11:15:57   # obs: 9451 (1950-2021)",
+      "solarGMKm3S2": 132712440041.27942,
+      "sourceFile": "Vesta.json"
+    },
+    {
+      "id": "Halley",
+      "name": "1P/Halley",
+      "kind": "comet",
+      "color": "#aedbcc",
+      "radiusKm": 5.5,
+      "epoch": "2026-10-01T00:00:00.000Z",
+      "position": [
+        -19.35582092171659,
+        27.46840081827004,
+        -9.853986921236578
+      ],
+      "velocityAUPerDay": [
+        0.0005477450256905323,
+        0.0001196579890267322,
+        0.0001316182528958978
+      ],
+      "source": {
+        "target": "Target body name: 1P/Halley                       {source: JPL#75}",
+        "apiVersion": "1.2"
+      },
+      "command": "DES=1P;CAP;",
+      "solution": "2025-Nov-21_15:57:34   # obs: 8518 (1835-1994)",
+      "solarGMKm3S2": 132712440041.27942,
+      "sourceFile": "Halley.json"
+    },
+    {
+      "id": "67P",
+      "name": "67P/Churyumov-Gerasimenko",
+      "kind": "comet",
+      "color": "#c6d9d6",
+      "radiusKm": 1.7,
+      "epoch": "2026-10-01T00:00:00.000Z",
+      "position": [
+        -0.04950089704293759,
+        -4.510134470516842,
+        -0.243696182372722
+      ],
+      "velocityAUPerDay": [
+        0.005425464803938464,
+        0.004004725053077189,
+        0.000001148144946511593
+      ],
+      "source": {
+        "target": "Target body name: 67P/Churyumov-Gerasimenko       {source: JPL#K284/1}",
+        "apiVersion": "1.2"
+      },
+      "command": "DES=67P;CAP;",
+      "solution": "2026-Sep-04_10:25:07   # obs: 8610 (2008-2025)",
+      "solarGMKm3S2": 132712440041.27942,
+      "sourceFile": "67P.json"
+    }
+  ]
+}
