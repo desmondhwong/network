@@ -10,7 +10,20 @@ export function searchCommands(commands, query, limit = 40) {
       + words.reduce((sum, word) => sum + (title.split(' ').includes(word) ? 20 : title.includes(word) ? 10 : 0), 0)
       + (command.priority ?? 0) - (command.disabled ? 3 : 0);
     return {command, score, index};
-  }).filter(Boolean).sort((a,b) => b.score-a.score || a.index-b.index).slice(0,limit).map(row => row.command);
+  }).filter(Boolean).sort((a,b) => b.score-a.score || a.index-b.index).slice(0,needle==='track'?undefined:limit).map(row => row.command);
+}
+
+// Direct tracking commands cover the complete catalogue, independently of the
+// native selector's option-count limit. The app owns tracking and camera state.
+export function bodyTrackingCommands(bodies, {selected, currentObserver, run = () => {}} = {}) {
+  const seen = new Set([selected, currentObserver]);
+  return bodies.flatMap(body => {
+    if (!body?.id || seen.has(body.id)) return [];
+    seen.add(body.id);
+    const name = body.id==='ISS' ? 'ISS' : body.name ?? body.id;
+    return [{id:`track:${body.id}`, title:`Track ${name}`, section:body.parentId&&!body.artificial?`${body.parentId} · tracking`:'Tracking',
+      keywords:`tracking aim follow look ${body.id} ${body.name ?? ''}`, priority:body.parentId&&!body.artificial?0:20, run:()=>run(body.id)}];
+  });
 }
 
 function labelFor(control, root) {
@@ -20,8 +33,9 @@ function labelFor(control, root) {
   return (control.getAttribute('aria-label') ?? copy?.textContent ?? control.textContent ?? control.id).replace(/\s+/g,' ').trim();
 }
 
-export function controlCommands(root, {reveal, report = () => {}}) {
+export function controlCommands(root, {reveal, report = () => {}, excludeActions = []}) {
   const result = [];
+  const excludedActions = new Set(excludeActions);
   for (const section of root.querySelectorAll('details[id]')) {
     const title = section.querySelector('summary')?.textContent.trim();
     if (title) result.push({id:`section:${section.id}`, title:`Open ${title} panel`, section:'Panels', priority:15, keywords:'show settings menu controls', run:()=>reveal(section)});
@@ -41,6 +55,7 @@ export function controlCommands(root, {reveal, report = () => {}}) {
       result.push({id:`toggle:${control.id}`, title:`Toggle ${subject}`, section, disabled, keywords:control.id,
         run:()=>{if(disabled)return blocked();control.checked=!control.checked;control.dispatchEvent(new (control.ownerDocument.defaultView.Event)('change',{bubbles:true}));}});
     } else if (control.tagName === 'BUTTON') {
+      if (excludedActions.has(control.id)) continue;
       result.push({id:`action:${control.id}`, title:label, section, disabled, keywords:control.id,
         run:()=>{if(disabled)return blocked();control.click();}});
     } else if (control.tagName === 'SELECT' && control.options.length <= 35) {

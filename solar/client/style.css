@@ -528,6 +528,8 @@ dialog .dialog-heading > button { flex: none; }
 #command-dialog > .dialog-heading, #command-search, #command-count { flex: none; }
 #command-results { min-height: 0; flex: 1 1 auto; overscroll-behavior: contain; }
 .touch-flight-controls { display: none !important; }
+.touch-flight-controls > .touch-navigation-control { display: grid; gap: .3rem; margin-block: .6rem; }
+#touch-navigation-mode { width: 100%; }
 .touch-movement, .touch-attitude, .touch-fov { display: grid; gap: .35rem; margin-block: .6rem; }
 .touch-movement { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .touch-forward { grid-column: 2; }

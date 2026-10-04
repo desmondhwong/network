@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#141614">
   <meta name="description" content="Solar-system ephemerides, topocentric sky, eclipse calculations, and Galactic-frame trajectories.">
-  <title>Solar system 0.26</title>
+  <title>Solar system 0.27</title>
   <link rel="icon" href="data:,">
   <style>/* Machine-authored: Codex / OpenAI / gpt-6. Compact controls and explicit flight instruments, claim 260924-161257-001/solar-system-overlays-imagery; see ../../PROJECT.md. */
 :root {
@@ -538,6 +538,8 @@ dialog .dialog-heading > button { flex: none; }
 #command-dialog > .dialog-heading, #command-search, #command-count { flex: none; }
 #command-results { min-height: 0; flex: 1 1 auto; overscroll-behavior: contain; }
 .touch-flight-controls { display: none !important; }
+.touch-flight-controls > .touch-navigation-control { display: grid; gap: .3rem; margin-block: .6rem; }
+#touch-navigation-mode { width: 100%; }
 .touch-movement, .touch-attitude, .touch-fov { display: grid; gap: .35rem; margin-block: .6rem; }
 .touch-movement { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .touch-forward { grid-column: 2; }
@@ -675,7 +677,7 @@ dialog .dialog-heading > button { flex: none; }
   <a class="skip-link" href="#controls">Skip to controls</a>
   <main id="app" data-density="normal">
     <header id="topbar" class="topbar">
-      <div class="identity"><h1>Solar system 0.26</h1></div>
+      <div class="identity"><h1>Solar system 0.27</h1></div>
       <nav hidden aria-label="Legacy camera destinations" class="segmented" id="modes">
         <button data-mode="space" aria-pressed="true">Space <kbd>1</kbd></button>
         <button data-mode="surface" aria-pressed="false">Surface <kbd>2</kbd></button>
@@ -689,7 +691,7 @@ dialog .dialog-heading > button { flex: none; }
         <div id="view-heading" class="field-heading"><div hidden><span id="view-index">Space</span><h2 id="view-title">Sun / tracking</h2></div><div class="camera-summary"><output id="camera-status" aria-live="off">Free camera · selected Sun · orbit unlocked · spin unlocked · pin off</output></div><div id="flight-stats" class="flight-stats" aria-label="Flight statistics and camera attitude" aria-live="off"><output id="flight-stats-text"></output><output id="pin-compass-readout" hidden></output><div id="flight-attitude" class="flight-attitude" aria-label="Camera roll, pitch, heading and held yaw input"><canvas id="attitude-horizon" class="attitude-dial" width="48" height="48" aria-hidden="true"></canvas><div class="attitude-values"><span id="attitude-roll">Roll 0°</span><span id="attitude-pitch">Pitch 0°</span><span id="attitude-heading">Heading 0°</span></div><canvas id="attitude-yaw" class="attitude-dial" width="48" height="48" aria-hidden="true"></canvas><output id="yaw-readout">Yaw neutral</output></div></div><div class="field-status"><span id="status" role="status">Ready.</span><span id="footer-source">Astronomy Engine</span><button id="about-open" class="text-button">Data and controls</button></div></div>
         
         
-        <div class="scene-row"><div class="scene-stage"><canvas id="scene" tabindex="0" aria-label="Continuous 3D space. W A S D Q E flies in the camera frame, including with surface spin lock. G deliberately enters Pin mode for tangent W A S D and radial Q / E; Shift+G resets pitch and roll, pins and lowers to 2 meters. Drag to look; use two fingers to pan and pinch to travel. Shift-drag pans and Option or Alt-drag orbits. Arrows roll and pitch. Comma and period hold left and right yaw; release stops turning. L and F toggle orbital and surface locks without moving the camera; Shift+L frames a body, Shift+F lands upright, R resets to the local tangent or Galactic orbit plane. Hover a body to highlight the lock target."></canvas></div></div>
+        <div class="scene-row"><div class="scene-stage"><canvas id="scene" tabindex="0" aria-label="Continuous 3D space. W A S D Q E flies in the camera frame, including with surface spin lock. G deliberately enters Pin mode for tangent W A S D and radial Q / E; Shift+G resets pitch and roll, pins and lowers to 2 meters. Mouse drag looks. Touch drag orbits from an external view and looks in Pin or onboard mode. Two fingers use the chosen drag operation, pinch travels and twist turns the heading in Orbit or Look. Panel offers Automatic, Look, Orbit and Pan. Shift-drag pans and Option or Alt-drag orbits. Arrows roll and pitch. Comma and period hold left and right yaw; release stops turning. L and F toggle orbital and surface locks without moving the camera; Shift+L frames a body, Shift+F lands upright, R resets to the local tangent or Galactic orbit plane. Hover a body to highlight the lock target."></canvas></div></div>
         <p id="render-error" hidden role="alert">The visual field could not start. Date controls and numerical tables remain available.</p>
         
         
@@ -697,6 +699,8 @@ dialog .dialog-heading > button { flex: none; }
 
       
     <aside aria-label="Instrument controls" id="side-dock"><div id="instrument-panels"><section aria-label="Data and view controls" id="tools-panel"><details class="flight-controls control-section" id="flight-controls"><summary aria-label="Flight and destination controls">Flight and destination</summary><label class="destination-control">Destination <select id="track-target"><option value="">No selection</option><option value="Sun" selected>Sun · 0</option><option value="Mercury">Mercury · 1</option><option value="Venus">Venus · 2</option><option value="Earth">Earth · 3</option><option value="Mars">Mars · 4</option><option value="Jupiter">Jupiter · 5</option><option value="Saturn">Saturn · 6</option><option value="Uranus">Uranus · 7</option><option value="Neptune">Neptune · 8</option><option value="Moon">Moon · 9</option><option value="Pluto">Pluto · dwarf planet</option><option value="Sagittarius A*">Sagittarius A*</option></select></label><div class="button-row"><button title="Toggle orbital following without moving the camera (L)" id="fly-target">Orbit lock <kbd>L</kbd></button><button title="Toggle surface spin lock without moving the camera (F)" id="tether-surface">Surface lock <kbd>F</kbd></button><button id="free-flight" disabled>Release tether</button><button id="reset-surface" title="Reset pitch and roll to the local tangent or Galactic orbit plane (R)">Reset upright <kbd>R</kbd></button></div><div class="button-row snap-actions" aria-label="Snap to destination"><button id="snap-orbit" title="Frame the destination and follow its orbit (Shift+L)">Frame + follow <kbd>⇧L</kbd></button><button id="snap-surface" title="Land upright on the destination reference sphere (Shift+F)">Land upright <kbd>⇧F</kbd></button></div><label class="check-control"><input id="follow-orbit" type="checkbox" checked> Follow destination orbit</label><output id="flight-status" aria-live="polite">Free flight</output><div hidden><label id="tether-height-control" hidden>Locked height (m) <input id="tether-height" type="number" min="2" max="1e28" step="any" value="30"></label></div><label hidden>Legacy movement mode <select id="surface-control-mode" disabled><option value="free" selected>Free camera</option><option value="surface">Pin mode</option></select></label><fieldset class="control-subsection pin-controls"><legend>Pin mode · deliberate surface movement</legend><div class="button-row"><button id="pin-mode" aria-pressed="false" title="Enter or leave Pin mode without moving the camera (G)">Pin mode <kbd>G</kbd></button><button id="snap-pin" title="Drop a pin, reset pitch and roll and lower to 2 meters (Shift+G)">Pin + lower <kbd>⇧G</kbd></button></div><label>Pin speed multiplier <input id="pin-speed" type="number" min="0.01" max="100" step="any" value="10"></label><output id="pin-speed-stats" aria-live="off">Pin speed adapts to body radius · 10×</output><p class="fineprint">G pins the nearest surface footprint at your current height and uses your current facing direction as forward. Shift+G also resets pitch and roll and lowers to 2 m. Pin mode uses tangent WASD and radial Q / E; landing or approaching a body keeps free camera movement.</p></fieldset><button id="mouse-look">Mouse look</button><fieldset id="touch-flight-controls" class="control-subsection touch-flight-controls"><legend>Touch flight</legend>
+          <label class="touch-navigation-control" for="touch-navigation-mode">One-finger drag <select id="touch-navigation-mode" aria-describedby="touch-navigation-guide"><option value="auto" selected>Automatic</option><option value="look">Look</option><option value="orbit">Orbit</option><option value="pan">Pan</option></select></label>
+          <p id="touch-navigation-guide" class="fineprint">Automatic orbits the selected target from an external view and looks around in Pin or onboard mode. Two-finger drag uses the same operation; pinch travels or changes Pin height. Twist turns the heading in Orbit or Look. Choose Pan to move across the viewing plane or Pin surface. The gesture choice lasts until changed.</p>
           <div class="touch-movement" role="group" aria-label="Move the camera"><button type="button" data-flight-key="KeyW" class="touch-forward" aria-label="Hold to move forward">Forward</button><button type="button" data-flight-key="KeyA" class="touch-left" aria-label="Hold to move left">Left</button><button type="button" data-flight-key="KeyS" class="touch-back" aria-label="Hold to move backward">Back</button><button type="button" data-flight-key="KeyD" class="touch-right" aria-label="Hold to move right">Right</button><button type="button" data-flight-key="KeyQ" class="touch-down" aria-label="Hold to move down">Down</button><button type="button" data-flight-key="KeyE" class="touch-up" aria-label="Hold to move up">Up</button></div>
           <div class="touch-attitude" role="group" aria-label="Turn the camera"><button type="button" data-flight-key="ArrowLeft" aria-label="Hold to roll left">Roll left</button><button type="button" data-flight-key="ArrowRight" aria-label="Hold to roll right">Roll right</button><button type="button" data-flight-key="ArrowUp" aria-label="Hold to pitch up">Pitch up</button><button type="button" data-flight-key="ArrowDown" aria-label="Hold to pitch down">Pitch down</button></div>
           <label class="check-control"><input id="touch-flight-fine" type="checkbox"> Fine movement</label><button type="button" data-flight-action="reset">Reset attitude</button>
@@ -816,7 +820,7 @@ dialog .dialog-heading > button { flex: none; }
     <h3>Remote dates</h3><p>The calendar accepts any signed decimal year, including year 0 (1 BCE), with exact arithmetic. Dates beyond the analytical engine envelope use an explicitly illustrative periodic model, not an ephemeris. Analytical dates outside 1800–2200 carry no validated accuracy guarantee. A finite calculation is not proof of historical or predictive precision. JPL retrieval and eclipse search retain the verified 1800–2200 interval. The source guide records the range probes and model limitations.</p>
     <h3>Stars and constellations</h3><p>Expanded XHIP bright and nearby stars use quality-filtered parallax distances and measured proper motions. Accepted radial velocities are included where available; otherwise that component is assumed zero. Other distances are explicitly illustrative. Constellation lines and optional names use the same spatial stars and distort away from the Solar neighborhood. Stellar motion can be switched off. Long-time Galactic paths use a bounded analytic model, not a gravitationally integrated or predictive Milky Way simulation. Binary motion, stellar evolution and lifetimes are omitted. The catalogue-kinematics label within ±1,000 Julian years of J2000 is a presentation boundary, not a verified accuracy range; more remote motion is labelled illustrative.</p>
     <h3>Milky Way context</h3><p>The optional Milky Way overview combines bounded schematic 3D arms, disk, bar/bulge and stellar halo with 2,024 observed cluster centers: 1,867 Gaia DR2-based open clusters from Cantat-Gaudin 2020 and 157 globular clusters from Harris 1996/2010. Clouds around selected centers illustrate members using the source projected half radii; they are not measured 3D member positions. The retained measured nearby-star layer is separate. Open-cluster coordinates use epoch 2015.5; globular coordinates use equinox J2000. The pattern and centers remain fixed in inertial Galactic axes while the modeled Sun moves. Cluster motion and Galactic evolution are not integrated; remote epochs remain illustrative. Opacity, bounded detail and cluster annotations are adjustable. Cluster names and marker circles share one toggle; bright center dots and stellar clouds remain visible without annotations.</p><p>Pluto uses Astronomy Engine’s integrated model near years 1–3998. Outside that interval its orbit is a circular illustration, labeled in the body readout.</p><h3>Astrology and eclipses</h3><p>The dedicated Astrology section is available in Earth context. It combines live signs and longitudes for the Sun, Moon and all other planets, ASC / DSC, MC / IC, sidereal time and alignments with the zodiac display. Show astrology overlays hides every astrology drawing and label together while retaining individual choices and numerical calculations. Earth has no direction from its own center, so it is omitted from the geocentric point controls. Outlines divide the ecliptic into twelve 30° sectors; colors, radii and opacity are adjustable. Filled wedges are removed. Independent longitude grid spacing accepts any value from 1° to 90°, with separate color, opacity and width. Marked sliders snap to common values, and adjacent number fields allow exact radii and opacity. Three global switches control ring point markers, labels and ecliptic longitudes. Longitude lines start off; their subordinate planet-point switch adds markers at the bodies’ actual ecliptic latitude when lines are on. Ring labels retain a separate placement for every object. Ring points are projected onto the ecliptic at their longitude and share the ring radius with their guides. Each object uses a consistent color for its marker, label and guide. Translucent Earth lets these celestial overlays show through; far-side surface markings stay hidden. Hover a point or grid coordinate for its model coordinates. Markers lie on an adjustable Earth-centered diagram, not at the physical body distances. These geometric relationships carry no predictive interpretation.</p><p>The dedicated Eclipses section searches solar or lunar events. Viewing an eclipse places the camera on Earth and aims toward the event sky; normal surface controls remain available. Local horizon, atmosphere and lunar limb details limit real-world visibility and contact precision.</p>
-    <h3>Controls</h3><p>On touch screens, drag with one finger to look; use two fingers to pan and pinch to travel. Panel opens the same controls on a small screen. Touch flight in Flight and destination provides held movement, roll and pitch, fine movement, attitude reset and field of view. The body globe supports the same surface and pin handles with touch.</p><p>Sidebar sections start closed on refresh. Only the top level of each sidebar section folds; all its controls remain together. With a section summary focused, Up / Down moves between visible sections, Left closes, Right opens, and Home / End selects the first / last section. Form controls retain their own arrow keys. The whole sidebar scrolls to its final control above the timeline. The viewing-area keyboard focus border fades shortly after activation. H hides all panels or shows them all when any panel is hidden; B hides the top bar, P the sidebar and T the complete timeline. Edge buttons restore them without taking space from the field. O opens Workspace. The heading identifies the selected body, orbit lock, spin lock and Pin mode. Optional numerical flight rows show position, flight speed, pin speed, relative body motion, scale and roll/pitch attitude. Pin mode adds a compass heading. N is 0°, E 90°, S 180° and W 270° in the stated reference frame. Separate attitude and yaw instruments share a dedicated Flight director section. Their compressed pitch diagram retains a visible horizon at steep angles; numerical angles carry the exact values. Escape clears selection after closing any dialog or releasing mouse look; clicking the selected body clears it too. Automatic timeline span follows playback rate; a manual span turns automatic scaling off. The timeline holds the UTC, display-zone and Pin clocks, with editable date and exact time together. Time options can align ruler ticks and snapping with the display time zone. Repeated local hours include their UTC offsets; dates outside civil-time support use a labelled UTC ruler. Now / N returns to the current UTC instant and preserves playback. Live now follows wall-clock time at 1×, including after sleep. Editing time or speed leaves Live mode. ⌘K / Ctrl+K opens searchable commands; Find reveals a setting in its panel.</p><dl class="keymap"><dt>H</dt><dd>Show all panels when any are hidden; otherwise hide all</dd><dt>B / P / T</dt><dd>Toggle top bar / sidebar / timeline</dd><dt>O</dt><dd>Open Workspace</dd><dt>0–9</dt><dd>Sun through Neptune, then Moon. First jump preserves the relative view; repeat to cycle default, solar-plane and surface views</dd><dt>L</dt><dd>Toggle orbital following without moving the camera</dd><dt>F</dt><dd>Toggle surface spin lock without moving the camera</dd><dt>G / Shift + G</dt><dd>Toggle Pin mode at the current pose / pin, reset pitch and roll and lower to 2 m</dd><dt>Shift + L / F</dt><dd>Frame and follow the destination / land upright on its reference sphere</dd><dt>, / .</dt><dd>Hold left / right yaw; release stops turning and returns the input dial to neutral, retaining heading</dd><dt>R</dt><dd>Clear held yaw and reset pitch and roll to the local tangent when locked, or the Galactic orbit plane in free flight</dd><dt>W A S D</dt><dd>Pin mode: tangent travel. Free camera: camera-relative travel</dd><dt>Q / E</dt><dd>Pin mode: radial down / up. Free camera: camera-relative down / up</dd><dt>Drag</dt><dd>Look around</dd><dt>Shift + drag</dt><dd>Pin mode: tangent pan. Free camera: view-plane pan</dd><dt>Option / Alt + drag</dt><dd>Orbit the selected target; Pin mode retains altitude</dd><dt>← / →</dt><dd>Scene: roll left / right. Sidebar summary: close / open section</dd><dt>↑ / ↓</dt><dd>Scene: pitch up / down. Sidebar summary: previous / next section</dd><dt>Home / End</dt><dd>Sidebar summary: first / last visible section</dd><dt>− / +</dt><dd>Adjust field of view without moving the camera</dd><dt>Shift + −</dt><dd>Reset field of view to 60°</dd><dt>Scroll / pinch</dt><dd>Travel toward / away from the cursor</dd><dt>C</dt><dd>Look toward the destination</dd><dt>Space</dt><dd>Play or pause calculated time</dd><dt>[ / ]</dt><dd>Previous / next day</dd><dt>N</dt><dd>Current UTC instant</dd><dt>Esc</dt><dd>Close a dialog or release mouse look, then clear selection; in Zen, reveal controls</dd></dl>
+    <h3>Controls</h3><p>On touch screens, Automatic drag orbits the selected target from an external view and looks around in Pin or onboard mode. Panel → Flight and destination → Touch flight offers Automatic, Look, Orbit and Pan for one-finger or two-finger drag. Pinch travels or changes Pin height; twist turns the heading in Orbit or Look. Pan moves across the viewing plane or Pin surface. The chosen operation is retained while fingers join or leave the gesture. Touch flight also provides held movement, roll and pitch, fine movement, attitude reset and field of view. The body globe retains two-finger pan and pinch, precise surface and pin handles, and double-tap Pin placement.</p><p>Sidebar sections start closed on refresh. Only the top level of each sidebar section folds; all its controls remain together. With a section summary focused, Up / Down moves between visible sections, Left closes, Right opens, and Home / End selects the first / last section. Form controls retain their own arrow keys. The whole sidebar scrolls to its final control above the timeline. The viewing-area keyboard focus border fades shortly after activation. H hides all panels or shows them all when any panel is hidden; B hides the top bar, P the sidebar and T the complete timeline. Edge buttons restore them without taking space from the field. O opens Workspace. The heading identifies the selected body, orbit lock, spin lock and Pin mode. Optional numerical flight rows show position, flight speed, pin speed, relative body motion, scale and roll/pitch attitude. Pin mode adds a compass heading. N is 0°, E 90°, S 180° and W 270° in the stated reference frame. Separate attitude and yaw instruments share a dedicated Flight director section. Their compressed pitch diagram retains a visible horizon at steep angles; numerical angles carry the exact values. Escape clears selection after closing any dialog or releasing mouse look; clicking the selected body clears it too. Automatic timeline span follows playback rate; a manual span turns automatic scaling off. The timeline holds the UTC, display-zone and Pin clocks, with editable date and exact time together. Time options can align ruler ticks and snapping with the display time zone. Repeated local hours include their UTC offsets; dates outside civil-time support use a labelled UTC ruler. Now / N returns to the current UTC instant and preserves playback. Live now follows wall-clock time at 1×, including after sleep. Editing time or speed leaves Live mode. ⌘K / Ctrl+K opens searchable commands; Find reveals a setting in its panel.</p><dl class="keymap"><dt>H</dt><dd>Show all panels when any are hidden; otherwise hide all</dd><dt>B / P / T</dt><dd>Toggle top bar / sidebar / timeline</dd><dt>O</dt><dd>Open Workspace</dd><dt>0–9</dt><dd>Sun through Neptune, then Moon. First jump preserves the relative view; repeat to cycle default, solar-plane and surface views</dd><dt>L</dt><dd>Toggle orbital following without moving the camera</dd><dt>F</dt><dd>Toggle surface spin lock without moving the camera</dd><dt>G / Shift + G</dt><dd>Toggle Pin mode at the current pose / pin, reset pitch and roll and lower to 2 m</dd><dt>Shift + L / F</dt><dd>Frame and follow the destination / land upright on its reference sphere</dd><dt>, / .</dt><dd>Hold left / right yaw; release stops turning and returns the input dial to neutral, retaining heading</dd><dt>R</dt><dd>Clear held yaw and reset pitch and roll to the local tangent when locked, or the Galactic orbit plane in free flight</dd><dt>W A S D</dt><dd>Pin mode: tangent travel. Free camera: camera-relative travel</dd><dt>Q / E</dt><dd>Pin mode: radial down / up. Free camera: camera-relative down / up</dd><dt>Drag</dt><dd>Look around</dd><dt>Shift + drag</dt><dd>Pin mode: tangent pan. Free camera: view-plane pan</dd><dt>Option / Alt + drag</dt><dd>Orbit the selected target; Pin mode retains altitude</dd><dt>← / →</dt><dd>Scene: roll left / right. Sidebar summary: close / open section</dd><dt>↑ / ↓</dt><dd>Scene: pitch up / down. Sidebar summary: previous / next section</dd><dt>Home / End</dt><dd>Sidebar summary: first / last visible section</dd><dt>− / +</dt><dd>Adjust field of view without moving the camera</dd><dt>Shift + −</dt><dd>Reset field of view to 60°</dd><dt>Scroll / pinch</dt><dd>Travel toward / away from the cursor</dd><dt>C</dt><dd>Look toward the destination</dd><dt>Space</dt><dd>Play or pause calculated time</dd><dt>[ / ]</dt><dd>Previous / next day</dd><dt>N</dt><dd>Current UTC instant</dd><dt>Esc</dt><dd>Close a dialog or release mouse look, then clear selection; in Zen, reveal controls</dd></dl>
   </dialog>
   <datalist id="overlay-radius-stops"><option value="1.01"></option><option value="2"></option><option value="5"></option><option value="6"></option><option value="10"></option><option value="20"></option><option value="50"></option><option value="100"></option><option value="200"></option><option value="500"></option></datalist><datalist id="longitude-stops"><option value="1"></option><option value="5"></option><option value="10"></option><option value="15"></option><option value="30"></option><option value="45"></option><option value="60"></option><option value="90"></option></datalist><datalist id="opacity-stops"><option value="0"></option><option value="0.1"></option><option value="0.25"></option><option value="0.5"></option><option value="0.75"></option><option value="1"></option></datalist>
   <noscript>This app needs JavaScript for local orbital calculations and the interactive canvas. JPL data queries require the local server and an explicit Load JPL action.</noscript>
@@ -11482,6 +11486,46 @@ dialog .dialog-heading > button { flex: none; }
     return Math.max(0, Math.min(1, legacy));
   }
 
+  // public/touch-navigation.mjs
+  var pointIsFinite = (point) => point && Number.isFinite(point.x) && Number.isFinite(point.y);
+  function resolveTouchNavigationMode(choice2 = "auto", { pinMode: pinMode2 = false, onboard = false } = {}) {
+    if (["look", "orbit", "pan"].includes(choice2)) return choice2;
+    return pinMode2 || onboard ? "look" : "orbit";
+  }
+  function touchNavigationDelta({ pointers, pointerId, point } = {}) {
+    if (!(pointers instanceof Map) || !pointIsFinite(point)) return null;
+    const previous = pointers.get(pointerId);
+    if (!pointIsFinite(previous) || pointers.size < 1 || pointers.size > 2) return null;
+    const dx = point.x - previous.x, dy = point.y - previous.y;
+    if (!Number.isFinite(dx) || !Number.isFinite(dy)) return null;
+    if (pointers.size === 1) return {
+      dx,
+      dy,
+      center: { x: point.x, y: point.y },
+      zoomFactor: 1,
+      twistRadians: 0,
+      touchCount: 1
+    };
+    const entries = [...pointers.entries()];
+    if (!entries.every(([, position]) => pointIsFinite(position))) return null;
+    const [first, second] = entries.map(([, position]) => position);
+    const [nextFirst, nextSecond] = entries.map(([id, position]) => id === pointerId ? point : position);
+    const oldX = second.x - first.x, oldY = second.y - first.y;
+    const newX = nextSecond.x - nextFirst.x, newY = nextSecond.y - nextFirst.y;
+    const oldDistance = Math.hypot(oldX, oldY), newDistance = Math.hypot(newX, newY);
+    if (!Number.isFinite(oldDistance) || !Number.isFinite(newDistance)) return null;
+    let zoomFactor = 1, twistRadians = 0;
+    if (oldDistance > 2 && newDistance > 2) {
+      zoomFactor = oldDistance / newDistance;
+      const ax = oldX / oldDistance, ay = oldY / oldDistance;
+      const bx = newX / newDistance, by = newY / newDistance;
+      twistRadians = Math.atan2(ax * by - ay * bx, ax * bx + ay * by);
+    }
+    const center = { x: nextFirst.x / 2 + nextSecond.x / 2, y: nextFirst.y / 2 + nextSecond.y / 2 };
+    if (!pointIsFinite(center) || !Number.isFinite(zoomFactor) || zoomFactor <= 0 || !Number.isFinite(twistRadians)) return null;
+    return { dx: dx / 2, dy: dy / 2, center, zoomFactor, twistRadians, touchCount: 2 };
+  }
+
   // public/iss-passes.mjs
   var AU3 = 1495978707e-1;
   var DEG4 = 180 / Math.PI;
@@ -12373,6 +12417,8 @@ dialog .dialog-heading > button { flex: none; }
       this.hoverPoint = null;
       this.hoveredBody = null;
       this.pointers = /* @__PURE__ */ new Map();
+      this.touchNavigationMode = "auto";
+      this.touchGesture = null;
       this.dragDistance = 0;
       this.listeners = [];
       this.disposed = false;
@@ -12426,11 +12472,13 @@ dialog .dialog-heading > button { flex: none; }
         }
       });
       this.listen("blur", () => {
-        const held = this.heldKeys.size;
+        const held = this.heldKeys.size, interacting = this.pointers.size || this.interactionActive;
+        this.cancelPointerInput();
         this.stopMovement();
+        if (interacting) this.endInteraction();
         if (held && this.state?.unifiedFlight) {
           this.notify({}, { drawPending: true });
-          this.redraw();
+          if (!interacting) this.redraw();
         }
       });
       this.pageHide = () => {
@@ -12483,6 +12531,7 @@ dialog .dialog-heading > button { flex: none; }
         this.lastInputFov = incomingFov;
       }
       this.state = state3;
+      this.checkTouchNavigationContext();
       if (state3.mode === "surface" && !this.globe) this.globe = { latitude: finite7(state3.latitude), longitude: finite7(state3.longitude), altitudeM: GROUND_HEIGHT_M };
       if (this.globe) {
         if (state3.mode === "space" && state3.selected !== "Earth") this.globe = null;
@@ -12539,6 +12588,7 @@ dialog .dialog-heading > button { flex: none; }
       return changed;
     }
     reset() {
+      this.cancelTouchNavigation();
       this.cancelNavigation();
       if (this.state?.unifiedFlight) {
         this.flight = createFlight();
@@ -12766,6 +12816,7 @@ dialog .dialog-heading > button { flex: none; }
     }
     redraw() {
       if (!this.state || this.disposed) return;
+      this.checkTouchNavigationContext();
       if (this.deferredInputPaint && typeof globalThis.requestAnimationFrame === "function") {
         if (this.inputPaintFrame == null) this.inputPaintFrame = globalThis.requestAnimationFrame(() => {
           this.inputPaintFrame = null;
@@ -12827,8 +12878,8 @@ dialog .dialog-heading > button { flex: none; }
       const parent = moonParent(body);
       return !parent || this.state.showMoons !== false && (parent === "Earth" || this.state.showNonEarthMoons !== false) && this.state.moonVisibility?.[body.id] !== false;
     }
-    // The extent of a moon's *orbit*, measured from its parent's center, controls
-    // visibility. Projected moon separation would blink at every conjunction.
+    // Orbital extent stays independent of conjunction. Extra moons also need a
+    // useful parent globe or their own nearby limb before entering the drawing.
     displayBodyScale() {
       return this.state.markerMode === "physical" ? clamp14(finite7(this.state.bodyScale, 1), 1, MAX_BODY_SCALE) : 1;
     }
@@ -12849,7 +12900,11 @@ dialog .dialog-heading > button { flex: none; }
       if (parentId) {
         const parentDistance = this.flightBodyDistance(parentId);
         const orbitPixels = Math.max(0, finite7(body.semimajorAxisAU, finite7(body.orbitAU, body.id === "Moon" ? 257e-5 : 0))) * this.focal / Math.max(1e-15, parentDistance);
-        return { dot: focused || scaledResolved ? 1 : smoothstep(8, 22, orbitPixels), label: focused ? 1 : smoothstep(24, 48, orbitPixels), priority: 60, orbitPixels };
+        if (parentId === "Earth") return { dot: focused || scaledResolved ? 1 : smoothstep(8, 22, orbitPixels), label: focused ? 1 : smoothstep(24, 48, orbitPixels), priority: 60, orbitPixels };
+        const parentPixels = bodyRadiusAU(parentId) * this.displayBodyScale() * this.focal / Math.max(1e-15, parentDistance), bodyPixels = bodyRadiusAU(body.id) * this.displayBodyScale() * this.focal / Math.max(1e-15, this.flightBodyDistance(body.id));
+        const ordinaryDot = Math.max(smoothstep(12, 24, parentPixels) * smoothstep(8, 22, orbitPixels), smoothstep(0.6, 1.3, bodyPixels));
+        const ordinaryLabel = Math.max(smoothstep(24, 48, parentPixels) * smoothstep(24, 48, orbitPixels) * smoothstep(0.3, 1, bodyPixels), smoothstep(2, 6, bodyPixels));
+        return { dot: focused ? 1 : ordinaryDot, label: focused ? 1 : ordinaryLabel, priority: 60, orbitPixels, parentPixels, bodyPixels, focused };
       }
       const systemPixels = 40 * this.focal / Math.max(1e-15, norm8(this.flight.position));
       return { dot: body.id === "Sun" || scaledResolved ? 1 : smoothstep(18, 60, systemPixels), label: body.id === "Sun" ? 1 : smoothstep(32, 90, systemPixels), priority: body.id === "Sun" ? 98 : body.id === "Earth" ? 94 : 90, systemPixels };
@@ -13613,12 +13668,13 @@ dialog .dialog-heading > button { flex: none; }
         color: options.color,
         opacity: clamp14(finite7(options.opacity, 1), 0, 1),
         bodyId: options.bodyId,
+        parentId: moonParent(this.bodyCache?.byId.get(options.bodyId)),
         required: options.required === true,
         key: options.key || `${category}:${text}`
       });
     }
-    labelAvoidsAnchors(box2, width, height) {
-      return !(this.labelAnchors || []).some((anchor) => Math.hypot(clamp14(anchor.x, box2.x - 5, box2.x + width + 5) - anchor.x, clamp14(anchor.y, box2.y - 4, box2.y + height + 4) - anchor.y) < anchor.radius);
+    labelAvoidsAnchors(box2, width, height, label = null) {
+      return !(this.labelAnchors || []).some((anchor) => !(label?.bodyId && anchor.parentId === label.bodyId) && Math.hypot(clamp14(anchor.x, box2.x - 5, box2.x + width + 5) - anchor.x, clamp14(anchor.y, box2.y - 4, box2.y + height + 4) - anchor.y) < anchor.radius);
     }
     drawRequiredLabels(labels) {
       const c = this.ctx, w = this.width, h = this.height, p = this.palette, margin = 10;
@@ -13671,7 +13727,7 @@ dialog .dialog-heading > button { flex: none; }
     flushLabels() {
       const { ctx: c, width: w, height: h, palette: p } = this;
       const queued = this.labelQueue.splice(0);
-      this.labelAnchors = [...queued.map((label) => ({ x: label.x, y: label.y, radius: clamp14(label.r, 3, 8) })), ...this.hits, ...this.astrologyHits || []].filter((anchor) => Number.isFinite(anchor.x) && Number.isFinite(anchor.y) && anchor.x >= 0 && anchor.x <= w && anchor.y >= 0 && anchor.y <= h).map((anchor) => ({ ...anchor, radius: clamp14(finite7(anchor.radius, 4), 3, 8) }));
+      this.labelAnchors = [...queued.map((label) => ({ x: label.x, y: label.y, parentId: label.parentId, radius: clamp14(label.r, 3, 8) })), ...this.hits, ...this.astrologyHits || []].filter((anchor) => Number.isFinite(anchor.x) && Number.isFinite(anchor.y) && anchor.x >= 0 && anchor.x <= w && anchor.y >= 0 && anchor.y <= h).map((anchor) => ({ ...anchor, radius: clamp14(finite7(anchor.radius, 4), 3, 8) }));
       this.drawRequiredLabels(queued.filter((label) => label.required));
       const labels = queued.filter((label) => !label.required).sort((a, b) => b.priority - a.priority || a.key.localeCompare(b.key));
       const seen = /* @__PURE__ */ new Set();
@@ -13692,12 +13748,14 @@ dialog .dialog-heading > button { flex: none; }
         ];
         const preferred = this.labelPlacements.get(label.key);
         const order = Number.isInteger(preferred) ? [preferred, ...options.map((_, index3) => index3).filter((index3) => index3 !== preferred)] : options.map((_, index3) => index3);
-        const valid = (box2) => box2.x >= 10 && box2.y >= 10 && box2.x + tw <= w - 10 && box2.y + th <= h - 10 && !this.labelBounds.some((other) => box2.x - 4 < other.x + other.w && box2.x + tw + 4 > other.x && box2.y - 3 < other.y + other.h && box2.y + th + 3 > other.y) && this.labelAvoidsAnchors(box2, tw, th);
+        const valid = (box2) => box2.x >= 10 && box2.y >= 10 && box2.x + tw <= w - 10 && box2.y + th <= h - 10 && !this.labelBounds.some((other) => box2.x - 4 < other.x + other.w && box2.x + tw + 4 > other.x && box2.y - 3 < other.y + other.h && box2.y + th + 3 > other.y) && this.labelAvoidsAnchors(box2, tw, th, label);
         const inside = (box2) => box2.x >= 10 && box2.y >= 10 && box2.x + tw <= w - 10 && box2.y + th <= h - 10;
+        const parentLabel = label.bodyId && !label.parentId && label.priority >= 90;
         let index2;
         if (Number.isInteger(preferred) && inside(options[preferred])) {
           this.labelEdgeSince.delete(label.key);
           if (valid(options[preferred])) index2 = preferred;
+          else if (parentLabel) index2 = order.find((index3) => valid(options[index3]));
         } else {
           const now2 = globalThis.performance?.now?.() ?? 0;
           if (Number.isInteger(preferred) && !this.labelEdgeSince.has(label.key)) this.labelEdgeSince.set(label.key, now2);
@@ -13710,6 +13768,10 @@ dialog .dialog-heading > button { flex: none; }
           continue;
         }
         let fade = 1;
+        if (parentLabel && visibility && !visibility.shown) {
+          visibility.shown = true;
+          visibility.clearSince = null;
+        }
         if (visibility && !visibility.shown) {
           visibility.clearSince ??= now;
           if (now - visibility.clearSince < 120) continue;
@@ -14093,16 +14155,21 @@ dialog .dialog-heading > button { flex: none; }
     }
     pointerDown(event) {
       if (event.button !== 0 && event.pointerType !== "touch") return;
+      const touch = event.pointerType === "touch";
+      if ([...this.pointers.values()].some((pointer) => pointer.touch !== touch)) return;
+      if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return;
       this.cancelNavigation();
       this.cancelZoomAnimation();
       this.canvas.focus({ preventScroll: true });
-      this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, pan: !!event.shiftKey, orbit: !!event.altKey });
+      if (touch && !this.touchGesture) this.touchGesture = { mode: resolveTouchNavigationMode(this.touchNavigationMode, { pinMode: this.isPinMode(), onboard: this.flight?.tether?.bodyId === "ISS" }), context: this.touchNavigationContext() };
+      this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, touch, pan: !!event.shiftKey, orbit: !!event.altKey });
       if (this.pointers.size === 1) this.dragDistance = 0;
       else this.dragDistance = Math.max(6, this.dragDistance);
       this.canvas.setPointerCapture?.(event.pointerId);
       this.canvas.style.cursor = "grabbing";
     }
     pointerMove(event) {
+      if (this.checkTouchNavigationContext()) return;
       if (this.inputDocument?.querySelector?.("dialog[open]")) {
         this.stopMovement();
         return;
@@ -14128,7 +14195,15 @@ dialog .dialog-heading > button { flex: none; }
         }
         return;
       }
-      const current = { x: event.clientX, y: event.clientY, pan: !!event.shiftKey, orbit: !!event.altKey };
+      const current = { x: event.clientX, y: event.clientY, touch: previous.touch, pan: !!event.shiftKey, orbit: !!event.altKey };
+      if (previous.touch) {
+        if (!Number.isFinite(current.x) || !Number.isFinite(current.y)) return;
+        const gesture = touchNavigationDelta({ pointers: this.pointers, pointerId: event.pointerId, point: current });
+        this.dragDistance += Math.hypot(current.x - previous.x, current.y - previous.y);
+        this.pointers.set(event.pointerId, current);
+        if (gesture) this.applyTouchNavigation(gesture);
+        return;
+      }
       const dx = current.x - previous.x, dy = current.y - previous.y;
       this.dragDistance += Math.hypot(dx, dy);
       if (this.pointers.size === 2) {
@@ -14148,6 +14223,7 @@ dialog .dialog-heading > button { flex: none; }
       const wasTracked = this.pointers.has(event.pointerId);
       if (!wasTracked) return;
       this.pointers.delete(event.pointerId);
+      if (!this.pointers.size) this.touchGesture = null;
       if (cancelled) this.dragDistance = Math.max(6, this.dragDistance);
       if (!this.pointers.size) this.endInteraction();
       this.canvas.style.cursor = this.pointers.size ? "grabbing" : "grab";
@@ -14164,9 +14240,48 @@ dialog .dialog-heading > button { flex: none; }
     cancelPointerInput() {
       const ids2 = [...this.pointers.keys()];
       this.pointers.clear();
+      this.touchGesture = null;
       this.dragDistance = 10;
       this.canvas.style.cursor = "grab";
       for (const id of ids2) if (this.canvas.hasPointerCapture?.(id)) this.canvas.releasePointerCapture?.(id);
+    }
+    touchNavigationContext() {
+      const tether = this.flight?.tether;
+      return JSON.stringify([!!this.state?.unifiedFlight, this.state?.mode, this.state?.selected, tether?.bodyId, tether?.controlMode]);
+    }
+    cancelTouchNavigation() {
+      if (!this.touchGesture) return false;
+      this.cancelPointerInput();
+      clearTimeout(this.refineTimer);
+      this.refineTimer = null;
+      this.interactionActive = false;
+      return true;
+    }
+    checkTouchNavigationContext() {
+      return !!this.touchGesture && this.touchGesture.context !== this.touchNavigationContext() && this.cancelTouchNavigation();
+    }
+    setTouchNavigationMode(mode2) {
+      if (!["auto", "look", "orbit", "pan"].includes(mode2)) return false;
+      if (mode2 === this.touchNavigationMode) return true;
+      this.touchNavigationMode = mode2;
+      this.cancelPointerInput();
+      this.endInteraction();
+      return true;
+    }
+    applyTouchNavigation(gesture) {
+      const mode2 = this.touchGesture?.mode ?? "look", operate = (dx, dy) => mode2 === "pan" ? this.panBy(dx, dy) : mode2 === "orbit" && this.state?.unifiedFlight ? this.orbitBy(dx, dy) : this.changeDirection(dx, dy);
+      if (gesture.dx || gesture.dy) operate(gesture.dx, gesture.dy);
+      if (gesture.twistRadians && mode2 !== "pan") {
+        const pixels = mode2 === "orbit" && this.state?.unifiedFlight ? gesture.twistRadians * Math.max(100, (this.height || 540) / (2 * Math.tan(this.fov * RAD11 / 2))) : -gesture.twistRadians * Math.max(200, this.height || 540) / (this.fov * RAD11);
+        if (mode2 === "orbit" && this.state?.unifiedFlight) {
+          const steps = Math.ceil(Math.abs(gesture.twistRadians) / 0.1), step = pixels / steps;
+          for (let i = 0; i < steps; i++) this.orbitBy(step, 0, { pixelLimit: Math.max(200, Math.abs(step)) });
+        } else operate(pixels, 0);
+      }
+      if (gesture.touchCount === 2 && gesture.zoomFactor !== 1) {
+        const box2 = this.canvas.getBoundingClientRect();
+        this.changeZoom(gesture.zoomFactor, false, { x: gesture.center.x - box2.left, y: gesture.center.y - box2.top });
+      }
     }
     localPoint(event) {
       const rect = this.canvas.getBoundingClientRect();
@@ -14517,6 +14632,7 @@ dialog .dialog-heading > button { flex: none; }
       }
       const tracked = this.trackedBody(state3);
       if (tracked) this.aimFlight(tracked);
+      this.checkTouchNavigationContext();
       if (paint) this.redraw();
     }
     flightCamera() {
@@ -14541,6 +14657,7 @@ dialog .dialog-heading > button { flex: none; }
     restoreFlight(data) {
       const flight = restoreFlight(data);
       if (!flight) return false;
+      this.cancelTouchNavigation();
       this.cancelNavigation();
       this.flight = flight;
       if (this.state?.unifiedFlight) {
@@ -14559,6 +14676,7 @@ dialog .dialog-heading > button { flex: none; }
     }
     restoreLegacyCamera(camera = {}, state3 = {}) {
       if (!this.state?.unifiedFlight) return false;
+      this.cancelTouchNavigation();
       const oldGlobe = camera.globe;
       if (oldGlobe || state3.mode === "surface") {
         const t = { bodyId: "Earth", controlMode: "surface", latitude: finite7(oldGlobe?.latitude, finite7(state3.latitude)), longitude: finite7(oldGlobe?.longitude, finite7(state3.longitude)), altitudeM: Math.max(2, finite7(oldGlobe?.altitudeM, 30)), heading: finite7(camera.azimuth, finite7(state3.heading, 180)), elevation: finite7(camera.elevation, 0), roll: 0 };
@@ -14664,6 +14782,7 @@ dialog .dialog-heading > button { flex: none; }
     }
     jumpToBody(id, { preset: preset2 = "relative", animate = this.state?.animateNavigation !== false, altitudeM, latitude, longitude, aimTarget, fov } = {}) {
       if (!this.state?.unifiedFlight || !this.flight || !["relative", "default", "solar", "surface", "pin"].includes(preset2) || id !== "Sagittarius A*" && !this.bodies().some((body) => body.id === id) || preset2 === "surface" && !this.canPin(id) || preset2 === "pin" && (!this.canPin(id) || this.flight.tether?.bodyId !== id)) return false;
+      this.cancelTouchNavigation();
       this.cancelNavigation();
       this.stopMovement();
       const startFov = this.fov, endFov = Number.isFinite(fov) ? clamp14(fov, 0.12, MAX_FOV) : this.fov, start = serializeFlight(this.flight), reference = this.navigationReference(), startDate = this.state.date, startOffset = finite7(this.state.galacticYears), startCenter = reference.bodyId ? this.spacePosition(reference.bodyId) : null;
@@ -14750,6 +14869,7 @@ dialog .dialog-heading > button { flex: none; }
       this.cancelNavigation();
       if (!this.state?.unifiedFlight) return this.fitBody(id);
       if (id !== "Sagittarius A*" && !this.bodies().some((body) => body.id === id)) return false;
+      this.cancelTouchNavigation();
       this.stopMovement();
       this.flight.tether = null;
       this.flight.followBody = id;
@@ -14782,6 +14902,7 @@ dialog .dialog-heading > button { flex: none; }
       this.cancelNavigation();
       if (!this.state?.unifiedFlight || !this.bodies().some((b) => b.id === id)) return false;
       if (!attachTether(this.flight, id, this.spacePosition(id), bodyFrame(id, this.state.date))) return false;
+      this.cancelTouchNavigation();
       this.retainTetherPose();
       this.state = { ...this.state, selected: id, trackSun: false, trackBody: null };
       this.notify({ selected: id, manualAim: true }, { drawPending: true });
@@ -15043,6 +15164,7 @@ dialog .dialog-heading > button { flex: none; }
     releaseAllLocks() {
       this.cancelNavigation();
       if (!this.flight?.tether && !this.flight?.followBody) return false;
+      this.cancelTouchNavigation();
       this.syncTether();
       this.flight.tether = null;
       this.flight.followBody = null;
@@ -15055,6 +15177,7 @@ dialog .dialog-heading > button { flex: none; }
       if (!this.state?.unifiedFlight || !this.flight) return false;
       if (id === null) return this.releaseAllLocks();
       if (id !== null && (this.flight.tether || id !== "Sagittarius A*" && !this.bodies().some((body) => body.id === id))) return false;
+      if (this.flight.followBody !== id) this.cancelTouchNavigation();
       this.flight.followBody = id;
       this.state = { ...this.state, trackSun: false, trackBody: null };
       this.notify({ manualAim: true }, { drawPending: true });
@@ -15158,12 +15281,13 @@ dialog .dialog-heading > button { flex: none; }
       this.redraw();
       return true;
     }
-    orbitBy(dx, dy) {
+    orbitBy(dx, dy, { pixelLimit = 200 } = {}) {
       if (!this.flight || !Number.isFinite(dx) || !Number.isFinite(dy)) return;
       this.cancelNavigation();
       const focal = Math.max(100, (this.height || 540) / (2 * Math.tan(this.fov * RAD11 / 2))), t = this.flight.tether;
-      dx = clamp14(dx, -200, 200);
-      dy = clamp14(dy, -200, 200);
+      const limit = Number.isFinite(pixelLimit) ? Math.max(0, pixelLimit) : 200;
+      dx = clamp14(dx, -limit, limit);
+      dy = clamp14(dy, -limit, limit);
       if (t?.bodyId === "ISS") {
         turnFlight(this.flight, -dx / focal, dy / focal, bodyFrame("ISS", this.state.date));
         this.syncTether();
@@ -15295,11 +15419,13 @@ dialog .dialog-heading > button { flex: none; }
       c.globalAlpha = this.surfaceOpacity(body.id) * visibility.dot;
       const point = disk.point, radius = this.focal * Math.tan(disk.angularRadius * RAD11), imageMoon = body.id === "Moon" && this.state.moonSurfaceDetail !== "schematic" && radius > 8 && !disk.inside, moonRaster = imageMoon ? this.moonRasterForBody(body) : null;
       if (radius < 1.3 && point && body.id !== this.flight.tether?.bodyId) {
-        const marker = this.state.markerMode === "physical" ? Math.max(0.8, radius) : Math.max(2, finite7(this.state.markerSize, 1) * 3);
+        const extraMoon = moonParent(body) && moonParent(body) !== "Earth", schematicFloor = Math.min(1.2, finite7(this.state.markerSize, 1) * (body.radiusEstimated ? 0.35 : 0.55));
+        const marker = this.state.markerMode === "physical" ? Math.max(0.8, radius) : extraMoon ? Math.max(radius, schematicFloor) : Math.max(2, finite7(this.state.markerSize, 1) * 3);
         c.fillStyle = body.color;
         c.beginPath();
         c.arc(point.x, point.y, marker, 0, TAU13);
-        if (this.state.markerMode === "physical") c.fill();
+        if (this.state.markerMode === "physical" || extraMoon && !body.radiusEstimated) c.fill();
+        else if (extraMoon) c.fillRect(point.x - marker, point.y - marker, marker * 2, marker * 2);
         else {
           c.strokeStyle = body.color;
           c.lineWidth = 0.85;
@@ -18653,7 +18779,24 @@ dialog .dialog-heading > button { flex: none; }
       if (!words.every((word) => haystack.includes(word))) return null;
       const score = (title === needle ? 1e3 : title.startsWith(needle) && needle ? 300 : 0) + words.reduce((sum, word) => sum + (title.split(" ").includes(word) ? 20 : title.includes(word) ? 10 : 0), 0) + (command.priority ?? 0) - (command.disabled ? 3 : 0);
       return { command, score, index: index2 };
-    }).filter(Boolean).sort((a, b) => b.score - a.score || a.index - b.index).slice(0, limit).map((row) => row.command);
+    }).filter(Boolean).sort((a, b) => b.score - a.score || a.index - b.index).slice(0, needle === "track" ? void 0 : limit).map((row) => row.command);
+  }
+  function bodyTrackingCommands(bodies2, { selected, currentObserver, run = () => {
+  } } = {}) {
+    const seen = /* @__PURE__ */ new Set([selected, currentObserver]);
+    return bodies2.flatMap((body) => {
+      if (!body?.id || seen.has(body.id)) return [];
+      seen.add(body.id);
+      const name = body.id === "ISS" ? "ISS" : body.name ?? body.id;
+      return [{
+        id: `track:${body.id}`,
+        title: `Track ${name}`,
+        section: body.parentId && !body.artificial ? `${body.parentId} · tracking` : "Tracking",
+        keywords: `tracking aim follow look ${body.id} ${body.name ?? ""}`,
+        priority: body.parentId && !body.artificial ? 0 : 20,
+        run: () => run(body.id)
+      }];
+    });
   }
   function labelFor(control, root) {
     const label = control.closest("label") ?? (control.id ? root.querySelector(`label[for="${control.id}"]`) : null);
@@ -18662,8 +18805,9 @@ dialog .dialog-heading > button { flex: none; }
     return (control.getAttribute("aria-label") ?? copy?.textContent ?? control.textContent ?? control.id).replace(/\s+/g, " ").trim();
   }
   function controlCommands(root, { reveal, report: report2 = () => {
-  } }) {
+  }, excludeActions = [] }) {
     const result = [];
+    const excludedActions = new Set(excludeActions);
     for (const section of root.querySelectorAll("details[id]")) {
       const title = section.querySelector("summary")?.textContent.trim();
       if (title) result.push({ id: `section:${section.id}`, title: `Open ${title} panel`, section: "Panels", priority: 15, keywords: "show settings menu controls", run: () => reveal(section) });
@@ -18704,6 +18848,7 @@ dialog .dialog-heading > button { flex: none; }
           }
         });
       } else if (control.tagName === "BUTTON") {
+        if (excludedActions.has(control.id)) continue;
         result.push({
           id: `action:${control.id}`,
           title: label,
@@ -19102,6 +19247,16 @@ dialog .dialog-heading > button { flex: none; }
   }
   function trackingTarget() {
     return state2.trackBody ?? (state2.trackSun ? "Sun" : null);
+  }
+  function setBodyTracking(id) {
+    if (id !== null && !bodies.some((body) => body.id === id)) return;
+    scene?.cancelPointerInput();
+    scene?.cancelNavigation();
+    state2.trackBody = id;
+    state2.trackSun = id === "Sun";
+    if (id) $2("pin-track-target").value = id;
+    render(true);
+    report(id ? `Tracking ${id}. Dragging releases tracking.` : "Tracking off.");
   }
   function syncClocks() {
     if ($2("live-now")) $2("live-now").setAttribute("aria-pressed", String(state2.liveNow));
@@ -20725,11 +20880,7 @@ dialog .dialog-heading > button { flex: none; }
     scene?.lookAtSun(sky);
     report(sky.find((b) => b.id === "Sun")?.altitude > 0 ? "View centered on the Sun." : "The Sun is below your horizon at this time.");
   };
-  $2("track-sun").onclick = () => {
-    state2.trackBody = trackingTarget() === "Sun" ? null : "Sun";
-    state2.trackSun = state2.trackBody === "Sun";
-    render();
-  };
+  $2("track-sun").onclick = () => setBodyTracking(trackingTarget() === "Sun" ? null : "Sun");
   $2("pin-track-target").onchange = () => {
     if (trackingTarget()) {
       state2.trackBody = $2("pin-track-target").value;
@@ -20744,12 +20895,7 @@ dialog .dialog-heading > button { flex: none; }
     render();
     report(`View aimed at ${$2("pin-track-target").value}.`);
   };
-  $2("pin-track-body").onclick = () => {
-    state2.trackBody = trackingTarget() ? null : $2("pin-track-target").value;
-    state2.trackSun = state2.trackBody === "Sun";
-    render();
-    report(state2.trackBody ? `Tracking ${state2.trackBody}. Dragging releases tracking.` : "Tracking off.");
-  };
+  $2("pin-track-body").onclick = () => setBodyTracking(trackingTarget() ? null : $2("pin-track-target").value);
   $2("fov").onchange = () => setFov(Number($2("fov").value));
   $2("fov-exact").onchange = () => setFov($2("fov-exact").value.trim() ? Number($2("fov-exact").value) : NaN);
   $2("fov-narrow").onclick = () => stepFov(1 / 1.2);
@@ -20974,6 +21120,7 @@ dialog .dialog-heading > button { flex: none; }
   function releasePointerLook() {
     const moving = scene?.interactiveDetail();
     if (document.pointerLockElement) document.exitPointerLock?.();
+    scene?.cancelPointerInput();
     scene?.stopMovement();
     scene?.cancelNavigation?.();
     scene?.cancelZoomAnimation?.();
@@ -21287,7 +21434,9 @@ dialog .dialog-heading > button { flex: none; }
           render(true);
           report(`Astrology overlays ${show ? "shown" : "hidden"}.`);
         } })),
-        ...controlCommands(document, { reveal: revealControl, report }),
+        ...controlCommands(document, { reveal: revealControl, report, excludeActions: ["track-sun", "pin-track-body"] }),
+        ...bodyTrackingCommands(bodies, { selected: state2.selected, currentObserver: scene?.camera?.flight?.tether?.bodyId, run: setBodyTracking }),
+        ...trackingTarget() ? [{ id: "tracking:stop", title: `Stop tracking ${trackingTarget()}`, section: "View tracking", keywords: "track tracking cancel off", priority: 25, run: () => setBodyTracking(null) }] : [],
         ...bodies.flatMap((body) => [
           { id: `select:${body.id}`, title: `Select ${body.name}`, section: body.parentId ? `${body.parentId} · moons` : "Solar system", keywords: body.id, run: () => selectBody(body.id) },
           { id: `fly:${body.id}`, title: `Fly to ${body.name}`, section: body.parentId ?? "Solar system", keywords: body.id, priority: 8, run: () => {
@@ -21481,6 +21630,9 @@ dialog .dialog-heading > button { flex: none; }
       else if (name === "fov-reset") setFov(60);
       else stepFov(name === "fov-in" ? 1 / 1.1 : 1.1);
     }
+  });
+  $2("touch-navigation-mode")?.addEventListener("change", (event) => {
+    scene?.setTouchNavigationMode(event.target.value);
   });
   for (const section of document.querySelectorAll("details.control-section")) section.addEventListener("toggle", () => {
     if (section.open) render(true);

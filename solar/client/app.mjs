@@ -25,7 +25,7 @@ import { moonInfoAt } from './moon-info.mjs';
 import { mountDataControls } from './data-controls.mjs';
 import { createISSTelemetryClient } from './iss-telemetry.mjs';
 import { encodeSharedView, decodeSharedView } from './shared-view.mjs';
-import { controlCommands, mountCommandMenu } from './commands.mjs';
+import { controlCommands, bodyTrackingCommands, mountCommandMenu } from './commands.mjs';
 import { LAUNCH_SITES, LAUNCH_SITE_PLACES } from './launch-sites.mjs';
 
 const $ = id => document.getElementById(id);
@@ -165,6 +165,13 @@ function applyPanels({stats=true}={}){
 }
 function clearTracking(){state.trackSun=false;state.trackBody=null;}
 function trackingTarget(){return state.trackBody??(state.trackSun?'Sun':null);}
+function setBodyTracking(id){
+  if(id!==null&&!bodies.some(body=>body.id===id))return;
+  scene?.cancelPointerInput();scene?.cancelNavigation();
+  state.trackBody=id;state.trackSun=id==='Sun';
+  if(id)$('pin-track-target').value=id;
+  render(true);report(id?`Tracking ${id}. Dragging releases tracking.`:'Tracking off.');
+}
 function syncClocks(){
   if($('live-now'))$('live-now').setAttribute('aria-pressed',String(state.liveNow));
   const offset=differenceMillis(state.date,new Date(Date.now()))/1000;
@@ -1022,10 +1029,10 @@ $('show-solar-orbit').onchange=()=>{state.showSolarOrbit=$('show-solar-orbit').c
 $('track-target').onchange=()=>{state.selected=$('track-target').value||null;render(true);report(state.selected==='ISS'?'ISS selected. Fly to ISS for a close view, or View from ISS to go onboard.':state.selected?`${state.selected} selected. L/F locks here; G enters Pin mode.`:'Selection cleared.');};
 $('reset-view').onclick=()=>{if(!state.selected)return;scene?.jumpToBody?.(state.selected,{preset:'default',animate:state.animateNavigation});finishNavigation('Default destination view.');};
 $('aim-sun').onclick=()=>{scene?.lookAtSun(sky);report(sky.find(b=>b.id==='Sun')?.altitude>0?'View centered on the Sun.':'The Sun is below your horizon at this time.');};
-$('track-sun').onclick=()=>{state.trackBody=trackingTarget()==='Sun'?null:'Sun';state.trackSun=state.trackBody==='Sun';render();};
+$('track-sun').onclick=()=>setBodyTracking(trackingTarget()==='Sun'?null:'Sun');
 $('pin-track-target').onchange=()=>{if(trackingTarget()){state.trackBody=$('pin-track-target').value;state.trackSun=state.trackBody==='Sun';render();}syncPinTracking();};
 $('aim-body').onclick=()=>{clearTracking();scene?.lookAtBody?.($('pin-track-target').value);render();report(`View aimed at ${$('pin-track-target').value}.`);};
-$('pin-track-body').onclick=()=>{state.trackBody=trackingTarget()?null:$('pin-track-target').value;state.trackSun=state.trackBody==='Sun';render();report(state.trackBody?`Tracking ${state.trackBody}. Dragging releases tracking.`:'Tracking off.');};
+$('pin-track-body').onclick=()=>setBodyTracking(trackingTarget()?null:$('pin-track-target').value);
 $('fov').onchange=()=>setFov(Number($('fov').value));
 $('fov-exact').onchange=()=>setFov($('fov-exact').value.trim()?Number($('fov-exact').value):NaN);
 $('fov-narrow').onclick=()=>stepFov(1/1.2);$('fov-wide').onclick=()=>stepFov(1.2);$('fov-reset').onclick=()=>setFov(60);
@@ -1087,7 +1094,7 @@ function useArrangement(value){
 function releasePointerLook(){
   const moving=scene?.interactiveDetail();
   if(document.pointerLockElement)document.exitPointerLock?.();
-  scene?.stopMovement();scene?.cancelNavigation?.();scene?.cancelZoomAnimation?.();
+  scene?.cancelPointerInput();scene?.stopMovement();scene?.cancelNavigation?.();scene?.cancelZoomAnimation?.();
   clearTimeout(motionUITimer);motionUITimer=null;lastViewInputKey='';
   if(moving&&!document.hidden){scene?.endInteraction?.();render(false,{paint:false});}
   else syncFlightStats();
@@ -1224,7 +1231,9 @@ const commandMenu=mountCommandMenu({dialog:$('command-dialog'),input:$('command-
   beforeOpen(){releasePointerLook();scene?.stopMovement();layout?.close();for(const id of ['help','workspace-dialog','time-options-dialog'])$(id).close();},
   getCommands(){return [
     ...[true,false].map(show=>({id:`astrology:${show}`,title:`${show?'Show':'Hide'} astrology overlays`,section:'Astrology · Earth',priority:30,keywords:'astrology zodiac overlay',run:()=>{if(show&&!earthObserverActive())selectBody('Earth');state.showAstrology=show;render(true);report(`Astrology overlays ${show?'shown':'hidden'}.`);}})),
-    ...controlCommands(document,{reveal:revealControl,report}),
+    ...controlCommands(document,{reveal:revealControl,report,excludeActions:['track-sun','pin-track-body']}),
+    ...bodyTrackingCommands(bodies,{selected:state.selected,currentObserver:scene?.camera?.flight?.tether?.bodyId,run:setBodyTracking}),
+    ...(trackingTarget()?[{id:'tracking:stop',title:`Stop tracking ${trackingTarget()}`,section:'View tracking',keywords:'track tracking cancel off',priority:25,run:()=>setBodyTracking(null)}]:[]),
     ...bodies.flatMap(body=>[
       {id:`select:${body.id}`,title:`Select ${body.name}`,section:body.parentId?`${body.parentId} · moons`:'Solar system',keywords:body.id,run:()=>selectBody(body.id)},
       {id:`fly:${body.id}`,title:`Fly to ${body.name}`,section:body.parentId??'Solar system',keywords:body.id,priority:8,run:()=>{selectBody(body.id);flyToSelected();}},
@@ -1271,6 +1280,7 @@ touchFlight=mountTouchFlight({
   step(key,fine){clearTracking();scene?.cancelNavigation();if(key.startsWith('arrow'))scene?.rotateFlight({roll:key==='arrowright'?.09:key==='arrowleft'?-.09:0,pitch:key==='arrowup'?.09:key==='arrowdown'?-.09:0});else scene?.moveFlight({forward:key==='w'?1:key==='s'?-1:0,right:key==='d'?1:key==='a'?-1:0,up:key==='e'?1:key==='q'?-1:0,seconds:.1,slow:fine});},
   action(name){if(name==='reset')$('reset-surface').click();else if(name==='fov-reset')setFov(60);else stepFov(name==='fov-in'?1/1.1:1.1);}
 });
+$('touch-navigation-mode')?.addEventListener('change',event=>{scene?.setTouchNavigationMode(event.target.value);});
 for(const section of document.querySelectorAll('details.control-section'))section.addEventListener('toggle',()=>{if(section.open)render(true);});
 syncWorkspaceControls();render(true);
 if(new URLSearchParams(location.hash.slice(1)).get('view')==='surface'){scene?.flyTo?.('Earth',{surface:true,altitudeM:30});}

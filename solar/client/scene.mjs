@@ -27,6 +27,7 @@ import {MOON_DETAIL_METADATA} from './moon-metadata.mjs';
 import {MoonRasterClient} from './moon-raster-client.mjs';
 import {solarVisibilityAt} from './physical-shadows.mjs';
 import {bodySurfaceOpacity} from './body-surfaces.mjs';
+import {resolveTouchNavigationMode,touchNavigationDelta} from './touch-navigation.mjs';
 import {issFootprintAt} from './iss-passes.mjs';
 import { DEFAULT_FOV, MAX_FOV, EARTH_RADIUS_M, GROUND_HEIGHT_M, solarDistanceGain, altitudeForLimb, stepAltitude, clipScreenSegment } from './zoom.mjs';
 import { globeBasis, globeLocationAt, anchorGlobe } from './globe-camera.mjs';
@@ -100,6 +101,7 @@ export class Scene {
     this.hoverPoint = null;
     this.hoveredBody = null;
     this.pointers = new Map();
+    this.touchNavigationMode = 'auto';this.touchGesture = null;
     this.dragDistance = 0;
     this.listeners = [];
     this.disposed = false;
@@ -133,7 +135,7 @@ export class Scene {
     this.listen('keydown', e => this.keyDown(e));
     this.listen('keyup', e => { const yaw=this.yawControl(),held=this.setMovementInput('keyboard',movementKey(e),false);this.slowMovement=!!e.shiftKey;const moved=this.lastFlightSpeedMps!==0;if(!this.heldKeys.size)this.stopMovement();if(this.state?.unifiedFlight&&(held||moved||yaw!==this.yawControl())){this.notify({},{drawPending:true});this.redraw();} });
     // Moving focus to an app control is not an instruction to abandon a jump.
-    this.listen('blur', () => {const held=this.heldKeys.size;this.stopMovement();if(held&&this.state?.unifiedFlight){this.notify({},{drawPending:true});this.redraw();}});
+    this.listen('blur', () => {const held=this.heldKeys.size,interacting=this.pointers.size||this.interactionActive;this.cancelPointerInput();this.stopMovement();if(interacting)this.endInteraction();if(held&&this.state?.unifiedFlight){this.notify({},{drawPending:true});if(!interacting)this.redraw();}});
     this.pageHide = () => { this.cancelInputPaint();this.cancelPointerInput();clearTimeout(this.refineTimer);this.refineTimer=null;this.interactionActive=false;this.stopMovement(); this.cancelZoomAnimation(); this.cancelNavigation();this.moonRasterClient.invalidate();for(const client of Object.values(this.geometryRasterClients))client.invalidate(); };
     globalThis.addEventListener?.('pagehide', this.pageHide);
     this.inputDocument=this.canvas.ownerDocument||globalThis.document;
@@ -166,6 +168,7 @@ export class Scene {
       this.lastInputFov = incomingFov;
     }
     this.state = state;
+    this.checkTouchNavigationContext();
     if (state.mode === 'surface' && !this.globe) this.globe = { latitude: finite(state.latitude), longitude: finite(state.longitude), altitudeM: GROUND_HEIGHT_M };
     if (this.globe) {
       if (state.mode === 'space' && state.selected !== 'Earth') this.globe = null;
@@ -216,6 +219,7 @@ export class Scene {
   }
 
   reset() {
+    this.cancelTouchNavigation();
     this.cancelNavigation();
     if (this.state?.unifiedFlight) { this.flight = Flight.createFlight(); this.fov = 60; this.notify({},{drawPending:true}); this.redraw(); return; }
     this.cancelZoomAnimation();
@@ -382,6 +386,7 @@ export class Scene {
 
   redraw() {
     if (!this.state || this.disposed) return;
+    this.checkTouchNavigationContext();
     if(this.deferredInputPaint&&typeof globalThis.requestAnimationFrame==='function'){
       if(this.inputPaintFrame==null)this.inputPaintFrame=globalThis.requestAnimationFrame(()=>{this.inputPaintFrame=null;this.redraw();});
       return;
@@ -434,8 +439,8 @@ export class Scene {
     const parent=moonParent(body);return !parent||(this.state.showMoons!==false&&(parent==='Earth'||this.state.showNonEarthMoons!==false)&&this.state.moonVisibility?.[body.id]!==false);
   }
 
-  // The extent of a moon's *orbit*, measured from its parent's center, controls
-  // visibility. Projected moon separation would blink at every conjunction.
+  // Orbital extent stays independent of conjunction. Extra moons also need a
+  // useful parent globe or their own nearby limb before entering the drawing.
   displayBodyScale() { return this.state.markerMode==='physical'?clamp(finite(this.state.bodyScale,1),1,MAX_BODY_SCALE):1; }
 
   flightBodyVisibility(body) {
@@ -453,7 +458,11 @@ export class Scene {
     if(parentId){
       const parentDistance=this.flightBodyDistance(parentId);
       const orbitPixels=Math.max(0,finite(body.semimajorAxisAU,finite(body.orbitAU,body.id==='Moon'?.00257:0)))*this.focal/Math.max(1e-15,parentDistance);
-      return {dot:focused||scaledResolved?1:smoothstep(8,22,orbitPixels),label:focused?1:smoothstep(24,48,orbitPixels),priority:60,orbitPixels};
+      if(parentId==='Earth')return {dot:focused||scaledResolved?1:smoothstep(8,22,orbitPixels),label:focused?1:smoothstep(24,48,orbitPixels),priority:60,orbitPixels};
+      const parentPixels=Flight.bodyRadiusAU(parentId)*this.displayBodyScale()*this.focal/Math.max(1e-15,parentDistance),bodyPixels=Flight.bodyRadiusAU(body.id)*this.displayBodyScale()*this.focal/Math.max(1e-15,this.flightBodyDistance(body.id));
+      const ordinaryDot=Math.max(smoothstep(12,24,parentPixels)*smoothstep(8,22,orbitPixels),smoothstep(.6,1.3,bodyPixels));
+      const ordinaryLabel=Math.max(smoothstep(24,48,parentPixels)*smoothstep(24,48,orbitPixels)*smoothstep(.3,1,bodyPixels),smoothstep(2,6,bodyPixels));
+      return {dot:focused?1:ordinaryDot,label:focused?1:ordinaryLabel,priority:60,orbitPixels,parentPixels,bodyPixels,focused};
     }
     const systemPixels=40*this.focal/Math.max(1e-15,Flight.norm(this.flight.position));
     return {dot:body.id==='Sun'||scaledResolved?1:smoothstep(18,60,systemPixels),label:body.id==='Sun'?1:smoothstep(32,90,systemPixels),priority:body.id==='Sun'?98:body.id==='Earth'?94:90,systemPixels};
@@ -1109,11 +1118,11 @@ export class Scene {
     if (![x, y, r].every(Number.isFinite) || x < 0 || y < 0 || x > this.width || y > this.height) return;
     const category = options.category || 'body';
     this.labelQueue.push({ text: String(text), x, y, r, selected, category, size: options.size || 11,
-      priority: selected ? 100 : options.priority ?? 80, color:options.color, opacity:clamp(finite(options.opacity,1),0,1), bodyId:options.bodyId, required:options.required===true, key: options.key||`${category}:${text}` });
+      priority: selected ? 100 : options.priority ?? 80, color:options.color, opacity:clamp(finite(options.opacity,1),0,1), bodyId:options.bodyId, parentId:moonParent(this.bodyCache?.byId.get(options.bodyId)), required:options.required===true, key: options.key||`${category}:${text}` });
   }
 
-  labelAvoidsAnchors(box,width,height) {
-    return !(this.labelAnchors||[]).some(anchor=>Math.hypot(clamp(anchor.x,box.x-5,box.x+width+5)-anchor.x,clamp(anchor.y,box.y-4,box.y+height+4)-anchor.y)<anchor.radius);
+  labelAvoidsAnchors(box,width,height,label=null) {
+    return !(this.labelAnchors||[]).some(anchor=>!(label?.bodyId&&anchor.parentId===label.bodyId)&&Math.hypot(clamp(anchor.x,box.x-5,box.x+width+5)-anchor.x,clamp(anchor.y,box.y-4,box.y+height+4)-anchor.y)<anchor.radius);
   }
 
   drawRequiredLabels(labels) {
@@ -1149,7 +1158,7 @@ export class Scene {
   flushLabels() {
     const { ctx: c, width: w, height: h, palette: p } = this;
     const queued=this.labelQueue.splice(0);
-    this.labelAnchors=[...queued.map(label=>({x:label.x,y:label.y,radius:clamp(label.r,3,8)})),...this.hits,...(this.astrologyHits||[])].filter(anchor=>Number.isFinite(anchor.x)&&Number.isFinite(anchor.y)&&anchor.x>=0&&anchor.x<=w&&anchor.y>=0&&anchor.y<=h).map(anchor=>({...anchor,radius:clamp(finite(anchor.radius,4),3,8)}));
+    this.labelAnchors=[...queued.map(label=>({x:label.x,y:label.y,parentId:label.parentId,radius:clamp(label.r,3,8)})),...this.hits,...(this.astrologyHits||[])].filter(anchor=>Number.isFinite(anchor.x)&&Number.isFinite(anchor.y)&&anchor.x>=0&&anchor.x<=w&&anchor.y>=0&&anchor.y<=h).map(anchor=>({...anchor,radius:clamp(finite(anchor.radius,4),3,8)}));
     this.drawRequiredLabels(queued.filter(label=>label.required));
     const labels = queued.filter(label=>!label.required).sort((a, b) => b.priority - a.priority || a.key.localeCompare(b.key));
     const seen = new Set();
@@ -1169,14 +1178,16 @@ export class Scene {
       const order = Number.isInteger(preferred) ? [preferred, ...options.map((_, index) => index).filter(index => index !== preferred)] : options.map((_, index) => index);
       const valid = box => box.x >= 10 && box.y >= 10 && box.x + tw <= w - 10 && box.y + th <= h - 10 &&
         !this.labelBounds.some(other => box.x - 4 < other.x + other.w && box.x + tw + 4 > other.x && box.y - 3 < other.y + other.h && box.y + th + 3 > other.y) &&
-        this.labelAvoidsAnchors(box,tw,th);
+        this.labelAvoidsAnchors(box,tw,th,label);
       // Keep a chosen side while it remains in bounds. A temporary collision hides
       // a low-priority label rather than making it hop around the object each frame.
       const inside = box => box.x >= 10 && box.y >= 10 && box.x + tw <= w - 10 && box.y + th <= h - 10;
+      const parentLabel=label.bodyId&&!label.parentId&&label.priority>=90;
       let index;
       if (Number.isInteger(preferred) && inside(options[preferred])) {
         this.labelEdgeSince.delete(label.key);
         if (valid(options[preferred])) index = preferred;
+        else if(parentLabel)index=order.find(index=>valid(options[index]));
       } else {
         const now = globalThis.performance?.now?.() ?? 0;
         if (Number.isInteger(preferred) && !this.labelEdgeSince.has(label.key)) this.labelEdgeSince.set(label.key, now);
@@ -1189,6 +1200,7 @@ export class Scene {
         continue;
       }
       let fade = 1;
+      if(parentLabel&&visibility&&!visibility.shown){visibility.shown=true;visibility.clearSince=null;}
       if (visibility && !visibility.shown) {
         visibility.clearSince ??= now;
         if (now - visibility.clearSince < 120) continue;
@@ -1494,10 +1506,13 @@ export class Scene {
 
   pointerDown(event) {
     if (event.button !== 0 && event.pointerType !== 'touch') return;
+    const touch=event.pointerType==='touch';if([...this.pointers.values()].some(pointer=>pointer.touch!==touch))return;
+    if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return;
     this.cancelNavigation();
     this.cancelZoomAnimation();
     this.canvas.focus({ preventScroll: true });
-    this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, pan: !!event.shiftKey, orbit: !!event.altKey });
+    if(touch&&!this.touchGesture)this.touchGesture={mode:resolveTouchNavigationMode(this.touchNavigationMode,{pinMode:this.isPinMode(),onboard:this.flight?.tether?.bodyId==='ISS'}),context:this.touchNavigationContext()};
+    this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY, touch,pan: !!event.shiftKey, orbit: !!event.altKey });
     if (this.pointers.size === 1) this.dragDistance = 0;
     else this.dragDistance=Math.max(6,this.dragDistance);
     this.canvas.setPointerCapture?.(event.pointerId);
@@ -1505,6 +1520,7 @@ export class Scene {
   }
 
   pointerMove(event) {
+    if(this.checkTouchNavigationContext())return;
     if(this.inputDocument?.querySelector?.('dialog[open]')) {this.stopMovement();return;}
     if(this.state?.unifiedFlight && this.inputDocument?.pointerLockElement===this.canvas) { this.markInteraction();const dx=finite(event.movementX),dy=finite(event.movementY); if(event.altKey)this.orbitBy(dx,dy);else if(event.shiftKey)this.panBy(dx,dy);else this.changeDirection(dx,dy); return; }
     const previous = this.pointers.get(event.pointerId);
@@ -1515,7 +1531,13 @@ export class Scene {
       if(this.state?.unifiedFlight&&hover!==this.hoveredBody){this.hoveredBody=hover;this.redraw();}
       return;
     }
-    const current = { x: event.clientX, y: event.clientY, pan: !!event.shiftKey, orbit: !!event.altKey };
+    const current = { x: event.clientX, y: event.clientY, touch:previous.touch,pan: !!event.shiftKey, orbit: !!event.altKey };
+    if(previous.touch){
+      if(!Number.isFinite(current.x)||!Number.isFinite(current.y))return;
+      const gesture=touchNavigationDelta({pointers:this.pointers,pointerId:event.pointerId,point:current});
+      this.dragDistance+=Math.hypot(current.x-previous.x,current.y-previous.y);this.pointers.set(event.pointerId,current);
+      if(gesture)this.applyTouchNavigation(gesture);return;
+    }
     const dx = current.x - previous.x, dy = current.y - previous.y;
     this.dragDistance += Math.hypot(dx, dy);
     if (this.pointers.size === 2) {
@@ -1538,6 +1560,7 @@ export class Scene {
     const wasTracked = this.pointers.has(event.pointerId);
     if(!wasTracked)return;
     this.pointers.delete(event.pointerId);
+    if(!this.pointers.size)this.touchGesture=null;
     if(cancelled)this.dragDistance=Math.max(6,this.dragDistance);
     if(!this.pointers.size)this.endInteraction();
     this.canvas.style.cursor = this.pointers.size?'grabbing':'grab';
@@ -1549,9 +1572,44 @@ export class Scene {
   }
 
   cancelPointerInput() {
-    const ids=[...this.pointers.keys()];this.pointers.clear();this.dragDistance=10;
+    const ids=[...this.pointers.keys()];this.pointers.clear();this.touchGesture=null;this.dragDistance=10;
     this.canvas.style.cursor='grab';
     for(const id of ids)if(this.canvas.hasPointerCapture?.(id))this.canvas.releasePointerCapture?.(id);
+  }
+
+  touchNavigationContext() {
+    const tether=this.flight?.tether;
+    return JSON.stringify([!!this.state?.unifiedFlight,this.state?.mode,this.state?.selected,tether?.bodyId,tether?.controlMode]);
+  }
+
+  cancelTouchNavigation() {
+    if(!this.touchGesture)return false;
+    this.cancelPointerInput();clearTimeout(this.refineTimer);this.refineTimer=null;this.interactionActive=false;return true;
+  }
+
+  checkTouchNavigationContext() {
+    return !!this.touchGesture&&this.touchGesture.context!==this.touchNavigationContext()&&this.cancelTouchNavigation();
+  }
+
+  setTouchNavigationMode(mode) {
+    if(!['auto','look','orbit','pan'].includes(mode))return false;
+    if(mode===this.touchNavigationMode)return true;
+    this.touchNavigationMode=mode;this.cancelPointerInput();this.endInteraction();return true;
+  }
+
+  applyTouchNavigation(gesture) {
+    const mode=this.touchGesture?.mode??'look',operate=(dx,dy)=>mode==='pan'?this.panBy(dx,dy):mode==='orbit'&&this.state?.unifiedFlight?this.orbitBy(dx,dy):this.changeDirection(dx,dy);
+    if(gesture.dx||gesture.dy)operate(gesture.dx,gesture.dy);
+    if(gesture.twistRadians&&mode!=='pan'){
+      const pixels=mode==='orbit'&&this.state?.unifiedFlight?gesture.twistRadians*Math.max(100,(this.height||540)/(2*Math.tan(this.fov*RAD/2))):-gesture.twistRadians*Math.max(200,this.height||540)/(this.fov*RAD);
+      if(mode==='orbit'&&this.state?.unifiedFlight){
+        // Keep each orbital rotation small without clipping a coarse twist
+        // sample to the desktop drag limit, even at a narrow field of view.
+        const steps=Math.ceil(Math.abs(gesture.twistRadians)/.1),step=pixels/steps;
+        for(let i=0;i<steps;i++)this.orbitBy(step,0,{pixelLimit:Math.max(200,Math.abs(step))});
+      }else operate(pixels,0);
+    }
+    if(gesture.touchCount===2&&gesture.zoomFactor!==1){const box=this.canvas.getBoundingClientRect();this.changeZoom(gesture.zoomFactor,false,{x:gesture.center.x-box.left,y:gesture.center.y-box.top});}
   }
 
   localPoint(event) {
@@ -1841,6 +1899,7 @@ export class Scene {
     // That is not a camera command and must never reset a released camera's roll.
     if(Number.isFinite(state.heading)&&!sameHeading(state.heading,this.lastInputHeading)&&(!previous||!sameHeading(state.heading,previous.heading))) { if(previous?.unifiedFlight||this.flight.tether)this.setHeading(state.heading); else this.lastInputHeading=state.heading; }
     const tracked=this.trackedBody(state);if(tracked)this.aimFlight(tracked);
+    this.checkTouchNavigationContext();
     if(paint)this.redraw();
   }
 
@@ -1854,6 +1913,7 @@ export class Scene {
 
   restoreFlight(data) {
     const flight=Flight.restoreFlight(data);if(!flight)return false;
+    this.cancelTouchNavigation();
     this.cancelNavigation();
     this.flight=flight;if(this.state?.unifiedFlight) {
       if(flight.tether){
@@ -1870,6 +1930,7 @@ export class Scene {
 
   restoreLegacyCamera(camera={},state={}) {
     if(!this.state?.unifiedFlight)return false;
+    this.cancelTouchNavigation();
     const oldGlobe=camera.globe;
     if(oldGlobe||state.mode==='surface') {
       const t={bodyId:'Earth',controlMode:'surface',latitude:finite(oldGlobe?.latitude,finite(state.latitude)),longitude:finite(oldGlobe?.longitude,finite(state.longitude)),altitudeM:Math.max(2,finite(oldGlobe?.altitudeM,30)),heading:finite(camera.azimuth,finite(state.heading,180)),elevation:finite(camera.elevation,0),roll:0};
@@ -1951,7 +2012,7 @@ export class Scene {
 
   jumpToBody(id,{preset='relative',animate=this.state?.animateNavigation!==false,altitudeM,latitude,longitude,aimTarget,fov}={}) {
     if(!this.state?.unifiedFlight||!this.flight||!['relative','default','solar','surface','pin'].includes(preset)||id!=='Sagittarius A*'&&!this.bodies().some(body=>body.id===id)||preset==='surface'&&!this.canPin(id)||preset==='pin'&&(!this.canPin(id)||this.flight.tether?.bodyId!==id))return false;
-    this.cancelNavigation();this.stopMovement();
+    this.cancelTouchNavigation();this.cancelNavigation();this.stopMovement();
     const startFov=this.fov,endFov=Number.isFinite(fov)?clamp(fov,.12,MAX_FOV):this.fov,start=Flight.serializeFlight(this.flight),reference=this.navigationReference(),startDate=this.state.date,startOffset=finite(this.state.galacticYears),startCenter=reference.bodyId?this.spacePosition(reference.bodyId):null;
     const surfaceLocation=Number.isFinite(latitude)&&Number.isFinite(longitude)?{latitude:clamp(latitude,-90,90),longitude:clamp(longitude,-180,180)}:id==='Earth'&&Flight.norm(Flight.sub(start.position,this.spacePosition(id)))>Flight.bodyRadiusAU(id)*20?{latitude:finite(this.state.latitude),longitude:finite(this.state.longitude)}:id==='Sagittarius A*'?null:Flight.surfaceLocation(start.position,this.spacePosition(id),Flight.bodyFrame(id,this.state.date),Flight.bodyRadiusAU(id));
     const destination=()=>{
@@ -1996,6 +2057,7 @@ export class Scene {
     this.cancelNavigation();
     if(!this.state?.unifiedFlight)return this.fitBody(id);
     if(id!=='Sagittarius A*'&&!this.bodies().some(body=>body.id===id))return false;
+    this.cancelTouchNavigation();
     this.stopMovement();this.flight.tether=null;this.flight.followBody=id;
     const center=this.spacePosition(id);
     if(surface&&id!=='Sagittarius A*') {
@@ -2016,6 +2078,7 @@ export class Scene {
     this.cancelNavigation();
     if(!this.state?.unifiedFlight||!this.bodies().some(b=>b.id===id))return false;
     if(!Flight.attachTether(this.flight,id,this.spacePosition(id),Flight.bodyFrame(id,this.state.date)))return false;
+    this.cancelTouchNavigation();
     this.retainTetherPose();
     this.state={...this.state,selected:id,trackSun:false,trackBody:null};this.notify({selected:id,manualAim:true},{drawPending:true});this.redraw();return true;
   }
@@ -2198,6 +2261,7 @@ export class Scene {
   releaseAllLocks() {
     this.cancelNavigation();
     if(!this.flight?.tether&&!this.flight?.followBody)return false;
+    this.cancelTouchNavigation();
     this.syncTether();this.flight.tether=null;this.flight.followBody=null;this.state={...this.state,trackSun:false,trackBody:null};this.notify({manualAim:true},{drawPending:true});this.redraw();return true;
   }
 
@@ -2205,6 +2269,7 @@ export class Scene {
     if(!this.state?.unifiedFlight||!this.flight)return false;
     if(id===null)return this.releaseAllLocks();
     if(id!==null&&(this.flight.tether||id!=='Sagittarius A*'&&!this.bodies().some(body=>body.id===id)))return false;
+    if(this.flight.followBody!==id)this.cancelTouchNavigation();
     this.flight.followBody=id;this.state={...this.state,trackSun:false,trackBody:null};this.notify({manualAim:true},{drawPending:true});this.redraw();return true;
   }
 
@@ -2279,11 +2344,12 @@ export class Scene {
     this.notify({manualAim:true},{drawPending:true});this.redraw();return true;
   }
 
-  orbitBy(dx,dy) {
+  orbitBy(dx,dy,{pixelLimit=200}={}) {
     if(!this.flight||!Number.isFinite(dx)||!Number.isFinite(dy))return;
     this.cancelNavigation();
     const focal=Math.max(100,(this.height||540)/(2*Math.tan(this.fov*RAD/2))),t=this.flight.tether;
-    dx=clamp(dx,-200,200);dy=clamp(dy,-200,200);
+    const limit=Number.isFinite(pixelLimit)?Math.max(0,pixelLimit):200;
+    dx=clamp(dx,-limit,limit);dy=clamp(dy,-limit,limit);
     if(t?.bodyId==='ISS'){Flight.turnFlight(this.flight,-dx/focal,dy/focal,Flight.bodyFrame('ISS',this.state.date));this.syncTether();this.notify({manualAim:true},{drawPending:true});this.redraw();return;}
     if(t) {
       const radiusM=Flight.bodyRadiusAU(t.bodyId)*Flight.AU_M+t.altitudeM,gain=t.altitudeM/radiusM/focal;
@@ -2388,9 +2454,11 @@ export class Scene {
     c.save();c.globalAlpha=this.surfaceOpacity(body.id)*visibility.dot;
     const point=disk.point,radius=this.focal*Math.tan(disk.angularRadius*RAD),imageMoon=body.id==='Moon'&&this.state.moonSurfaceDetail!=='schematic'&&radius>8&&!disk.inside,moonRaster=imageMoon?this.moonRasterForBody(body):null;
     if(radius<1.3&&point&&body.id!==this.flight.tether?.bodyId) {
-      const marker=this.state.markerMode==='physical'?Math.max(.8,radius):Math.max(2,finite(this.state.markerSize,1)*3);
+      const extraMoon=moonParent(body)&&moonParent(body)!=='Earth',schematicFloor=Math.min(1.2,finite(this.state.markerSize,1)*(body.radiusEstimated?.35:.55));
+      const marker=this.state.markerMode==='physical'?Math.max(.8,radius):extraMoon?Math.max(radius,schematicFloor):Math.max(2,finite(this.state.markerSize,1)*3);
       c.fillStyle=body.color;c.beginPath();c.arc(point.x,point.y,marker,0,TAU);
-      if(this.state.markerMode==='physical')c.fill();
+      if(this.state.markerMode==='physical'||extraMoon&&!body.radiusEstimated)c.fill();
+      else if(extraMoon)c.fillRect(point.x-marker,point.y-marker,marker*2,marker*2);
       else {c.strokeStyle=body.color;c.lineWidth=.85;c.stroke();c.fillRect(point.x-.5,point.y-.5,1,1);}
     }else if(!moonRaster) {
       this.fillSkyPolygon(disk.polygon,body.id==='Sun'?'#edbd62':body.id==='Earth'&&this.state.showEarthTerrain!==false?'#102330':this.state.theme==='dark'?'#141b21':'#717974');
